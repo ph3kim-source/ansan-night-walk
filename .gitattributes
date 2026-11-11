@@ -1,0 +1,5 @@
+*.csv -text
+*.geojson -text
+*.json -text
+*.gz binary
+*.npz binary

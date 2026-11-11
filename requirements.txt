@@ -1,0 +1,11 @@
+streamlit==1.55.0
+geopandas==1.1.1
+pyogrio==0.11.1
+shapely==2.1.2
+pyproj==3.7.2
+pandas==2.3.3
+numpy==2.3.5
+scipy==1.16.2
+networkx==3.6.1
+pydeck==0.9.1
+plotly==6.7.0

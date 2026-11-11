@@ -1,0 +1,78 @@
+{
+  "month": "202606",
+  "seed": 20260611,
+  "hours": [
+    21,
+    22,
+    23,
+    0,
+    1,
+    2
+  ],
+  "files": {
+    "DS-054": {
+      "file": "tbsh_gyeonggi_agrde_1tm_202606.csv.gz",
+      "rows": 486139,
+      "mb": 4.91,
+      "cols": 14
+    },
+    "DS-048": {
+      "file": "tbsh_gyeonggi_mer_s_202606.csv",
+      "rows": 20051,
+      "mb": 1.58,
+      "cols": 21
+    },
+    "DS-082": {
+      "file": "GYEONGGI_CELL_STAT_202606.csv.gz",
+      "rows": 51812,
+      "mb": 0.98,
+      "cols": 108
+    },
+    "DS-014": {
+      "file": "T22_GG_ADMI_FLOWPOP_202606_4127.csv",
+      "rows": 36000,
+      "mb": 7.93,
+      "cols": 32
+    },
+    "DS-008": {
+      "file": "T11_GG_TRANS_SEXAGE_ADMI_OUTFLOW_202606_4127.csv.gz",
+      "rows": 335687,
+      "mb": 1.75,
+      "cols": 12
+    },
+    "DS-004": {
+      "file": "T13_GG_PURPOSE_SEXAGE_ADMI_OD_202606_4127.csv.gz",
+      "rows": 280877,
+      "mb": 1.67,
+      "cols": 17
+    },
+    "DS-001": {
+      "file": "T25_GG_PURPOSE_TRANS_SEXAGE_SGG_OD_202606_4127.csv.gz",
+      "rows": 279237,
+      "mb": 1.73,
+      "cols": 19
+    },
+    "보안등": {
+      "file": "전국보안등정보표준데이터_안산_임의값.csv",
+      "rows": 24929,
+      "mb": 4.2,
+      "cols": 13
+    },
+    "CCTV": {
+      "file": "전국CCTV표준데이터_안산_임의값.csv",
+      "rows": 2295,
+      "mb": 0.4,
+      "cols": 15
+    },
+    "블록좌표": {
+      "file": "card_block_centroid_임의규칙.csv",
+      "rows": 3337,
+      "mb": 0.09,
+      "cols": 3
+    }
+  },
+  "anchors_24h": 883,
+  "anchors_all": 1064,
+  "dead_shops": 570,
+  "sec": 18.3
+}

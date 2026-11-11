@@ -1,0 +1,6 @@
+[out:json][timeout:300];
+(
+  way["highway"~"^(footway|path|pedestrian|steps|living_street|residential|service|unclassified|track|tertiary|secondary|primary)$"]
+    (37.2675,126.7175,37.3775,126.9396);
+);
+out geom;
