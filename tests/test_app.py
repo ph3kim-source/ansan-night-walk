@@ -62,6 +62,10 @@ def test_build_outputs(built):
     assert js.startswith("window.APP_DATA = ")
     assert "data/real" not in js and "terms.npz" not in js
     assert (out / "data.js").stat().st_size < 6 * 2 ** 20                    # 폰에서도 받을 만한 크기
+    import collect_api as CA                                                 # #41 — 바탕지도 키(브이월드)만 싣고, 다른 키는 절대 싣지 않는다
+    env = CA.load_env()
+    assert all(env[k] not in js for k in ("SGIS_KEY", "SGIS_SECRET", "DATA_GO_KR_KEY", "VWORLD_DOMAIN") if env.get(k) and len(env[k]) > 8)
+    assert built[1]["meta"].get("vworld_key", "") == env.get("VWORLD_KEY", "")
     man = json.loads((out / "manifest.webmanifest").read_text(encoding="utf-8"))   # #31 설치형 웹앱
     assert man["display"] == "standalone" and man["start_url"].startswith("./") and man["name"] == "안산 밤길"
     assert {i["sizes"] for i in man["icons"]} >= {"192x192", "512x512"} and any(i.get("purpose") == "maskable" for i in man["icons"])

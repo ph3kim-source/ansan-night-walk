@@ -388,6 +388,8 @@ def build(out=OUT, real=False):
     road, trail = road_class(edges)
     acc, acc_e, acc_years = ped_accidents(G, nodes)
     hours = PM.NIGHT_HOURS.value
+    import collect_api as CA                                            # 브이월드 바탕지도 키(#41 사용자 결정) — .env 에 있으면 앱에 넣는다.
+    vkey = CA.load_env().get("VWORLD_KEY", "")                          # 지도 그림(WMTS)용 공개 키라 앱 파일에 실린다. 없으면 OpenStreetMap
     data = {
         "meta": {
             "built": datetime.date.today().isoformat(), "synthetic": True,
@@ -401,6 +403,7 @@ def build(out=OUT, real=False):
             "day_night": PM.RUN_DAYNIGHT.value, "sun": sun_table(datetime.date.today().year),
             "ped_acc": {"types": PM.PED_ACC.value["types"], "years": acc_years},
             "n": int(G.n), "m": int(G.m), "courses_built": run.get("built"),
+            **({"vworld_key": vkey} if vkey else {}),
         },
         "lat": b64(lat), "lng": b64(lng), "giant": b64(giant(G)),
         "u": b64(G.u.astype(np.int32)), "v": b64(G.v.astype(np.int32)), "len": b64(G.length.astype(np.float32)),

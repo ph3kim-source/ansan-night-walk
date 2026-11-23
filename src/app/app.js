@@ -144,7 +144,7 @@ function nowSlot() {
 const map = L.map("map", {zoomControl: false, preferCanvas: true, minZoom: 11, maxZoom: 19}).setView([37.3155, 126.8336], 13);
 const osm = cls => L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
   {maxZoom: 19, className: cls || "", attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'});
-const VKEY = store.raw(KEY_VW);
+const VKEY = store.raw(KEY_VW) || M.vworld_key || "";  // 이 브라우저에 넣은 키 → 앱에 넣어 둔 키(#41, 사용자 결정) → 없으면 OSM
 const vw = layer => L.tileLayer(`https://api.vworld.kr/req/wmts/1.0.0/${encodeURIComponent(VKEY)}/${layer}/{z}/{y}/{x}.png`,
   {maxZoom: 19, attribution: '&copy; <a href="https://www.vworld.kr">브이월드</a>(국토교통부)'});
 const BASES = VKEY ? [{t: "일반", l: vw("Base"), vw: 1}, {t: "야간", l: vw("midnight"), vw: 1}, {t: "OSM", l: osm()}, {t: "OSM 어둡게", l: osm("dark-tiles")}]
@@ -159,7 +159,8 @@ function dropBase(b) {                  // 키가 틀리면 브이월드는 그�
   if (!BASES.some(x => x.vw)) note("브이월드 지도를 못 불러왔습니다(인증키 · 서비스 URL 확인) · OpenStreetMap 바탕");
 }
 BASES.filter(b => b.vw).forEach(b => { let ok = 0, bad = 0; b.l.on("tileload", () => ok++); b.l.on("tileerror", () => { if (++bad >= 4 && !ok) dropBase(b); }); });
-{ const b = store.get(KEY_BASE, 0); setBase(Number.isInteger(b) && b >= 0 && b < BASES.length ? b : 0); }
+{ const b = store.get(KEY_BASE, null);                // 처음 여는 사람 — 브이월드가 있으면 해 진 뒤엔 야간 지도(#41)
+  setBase(Number.isInteger(b) && b >= 0 && b < BASES.length ? b : (BASES[1] && BASES[1].vw && isNight() ? 1 : 0)); }
 $("baseBtn").onclick = () => setBase((baseI + 1) % BASES.length);
 
 const LY = {walk: L.layerGroup().addTo(map), run: L.layerGroup(), me: L.layerGroup().addTo(map), shops: L.layerGroup().addTo(map)};
@@ -757,11 +758,12 @@ function showSources() {
 }
 function showBaseSet() {
   modal(`<button class="x" id="mX" aria-label="닫기">×</button><h3>바탕지도 설정</h3>
-    <p>키가 없어도 OpenStreetMap 바탕으로 볼 수 있어요. 브이월드(국토교통부) 인증키를 넣으면 브이월드 일반 · 야간 지도로 바뀌어요.</p>
+    <p>${M.vworld_key ? "이 앱에는 브이월드(국토교통부) 지도가 들어 있어요. 다른 인증키를 쓰려면 아래에 넣으세요." :
+      "키가 없어도 OpenStreetMap 바탕으로 볼 수 있어요. 브이월드(국토교통부) 인증키를 넣으면 브이월드 일반 · 야간 지도로 바뀌어요."}</p>
     <ol><li>vworld.kr → 오픈API → 인증키 발급 — 배경지도(WMTS)도 쓰도록 신청</li><li>서비스 URL: <b>${esc(location.origin)}</b></li></ol>
-    <input type="text" id="vk" value="${esc(VKEY)}" placeholder="브이월드 인증키 붙여넣기">
+    <input type="text" id="vk" value="${esc(store.raw(KEY_VW))}" placeholder="${M.vworld_key ? "비워 두면 앱에 들어 있는 지도를 써요" : "브이월드 인증키 붙여넣기"}">
     <div class="btns"><button class="btn" id="vSave">저장하고 다시 열기</button><button class="btn ghost" id="vDel">키 지우기</button></div>
-    <p class="note">키는 이 브라우저에만 저장돼요. 지금 바탕: ${BASES.some(b => b.vw) ? "브이월드" : "OpenStreetMap"}</p>`);
+    <p class="note">여기 넣은 키는 이 브라우저에만 저장돼요. 지금 바탕: ${BASES.some(b => b.vw) ? "브이월드" : "OpenStreetMap"}</p>`);
   $("vSave").onclick = () => { store.put(KEY_VW, $("vk").value.trim()); location.reload(); };
   $("vDel").onclick = () => { store.put(KEY_VW, ""); location.reload(); };
 }

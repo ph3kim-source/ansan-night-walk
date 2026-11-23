@@ -41,7 +41,7 @@ KEYS = ("SGIS_KEY", "SGIS_SECRET", "VWORLD_KEY", "VWORLD_DOMAIN", "DATA_GO_KR_KE
 NEED = {"sgis": ("SGIS_KEY", "SGIS_SECRET"), "vworld": ("VWORLD_KEY",), "cctv": ("DATA_GO_KR_KEY",)}
 WHERE = {
     "sgis": "sgis.mods.go.kr → 개발지원센터 → 인증키 신청(서비스ID · 보안Key)",
-    "vworld": "vworld.kr → 오픈API → 인증키 발급(서비스 URL 은 http://localhost — VWORLD_DOMAIN 에도 같은 값)",
+    "vworld": "vworld.kr → 오픈API → 인증키 발급 — VWORLD_DOMAIN 에는 신청서에 등록한 서비스 URL 을 그대로(예: https://ph3kim-source.github.io, #41)",
     "cctv": "data.go.kr → 「행정안전부_CCTV정보 조회서비스」(15155042) 활용신청 → 일반 인증키(Decoding)",
 }
 LICENSE = {
