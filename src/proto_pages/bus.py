@@ -81,7 +81,7 @@ layers = []
 for i, row in t.head(5).iterrows():
     b = paths[row["key"]]
     if i == 0:
-        layers.append(UI.path_layer(G, b["edges"], UI.act_rgb(ea[b["edges"]], W.thr), 7, "best"))
+        layers.append(UI.path_layer(G, b["edges"], UI.route_rgb(b["edges"], ea), 7, "best"))
     else:
         layers.append(UI.line_layer(G, b["path"], UI.BASE_RGB, 3, f"p{i}", 150))
 pts = t.head(5).copy()

@@ -39,11 +39,11 @@ def test_slot_night_of():
 def test_pages_render(page):
     from streamlit.testing.v1 import AppTest
     at = AppTest.from_file(str(SRC / "proto_app.py"), default_timeout=600)
-    at.run()
-    if page != PAGES[0]:
+    at.run()                                           # 첫 화면 = 담당자 '보안등 대조'(#24)
+    if page != "proto_pages/lights.py":
         at.switch_page(page).run()
     assert len(at.exception) == 0, [e.value for e in at.exception]
-    if page == PAGES[0]:
+    if page == "proto_pages/route.py":
         assert len(at.metric) >= 4                     # 경로 계산까지 성공
 
 
@@ -52,6 +52,7 @@ def test_route_slot_changes():
     from streamlit.testing.v1 import AppTest
     at = AppTest.from_file(str(SRC / "proto_app.py"), default_timeout=600)
     at.run()
+    at.switch_page("proto_pages/route.py").run()
     at.button_group(key="dow").set_value("화").run()
     at.button_group(key="hour").set_value("새벽 1시").run()
     at.toggle(key="cmp_on").set_value(True).run()

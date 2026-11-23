@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>안산 밤길지도</title>
+<link rel="icon" href="data:,">
+<!-- 3안 수정사항 #21 — src/build_map.py 가 데이터를 채워 html/안산_밤길지도.html 로 쓴다. 이 파일을 직접 고치지 말 것 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.min.css">
+<style>
+:root{--navy:#1f2a44;--line:#d9dde5;--ink:#1d2433;--mute:#667085;--bg:#f4f6f9;--accent:#f5a623;--panel-w:320px}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",sans-serif;color:var(--ink);background:var(--bg)}
+#map{position:absolute;inset:0}
+.card{background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 2px 10px rgba(16,24,40,.12)}
+button{font:inherit;cursor:pointer}
+/* 왼쪽 패널 */
+#panel{position:absolute;top:10px;left:10px;width:var(--panel-w);max-height:calc(100% - 20px);display:flex;flex-direction:column;z-index:1000;overflow:hidden}
+#panel header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--navy);color:#fff}
+#panel header .brand{font-weight:700;font-size:16px;flex:1}
+#panel header button{background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:5px;padding:5px 10px;font-size:13px}
+#panel .body{padding:12px;overflow:auto}
+#panel h2{font-size:15px;margin:0 0 8px;color:#22409a}
+#panel .desc{display:flex;gap:10px;font-size:12.5px;line-height:1.55;color:#475467}
+#panel .desc .ico{flex:none;width:52px;height:52px;border-radius:8px;background:var(--navy);display:grid;place-items:center}
+.btns{display:flex;gap:6px;margin:12px 0 8px;padding-top:10px;border-top:1px solid var(--line)}
+.btns button{flex:1;padding:6px 0;border:1px solid var(--line);background:#fff;border-radius:5px;font-size:12.5px}
+.btns button.on{background:#5b6b8c;color:#fff;border-color:#5b6b8c}
+.layers{list-style:none;margin:0;padding:0}
+.layers li{display:flex;align-items:center;gap:8px;padding:6px 2px;font-size:13.5px;border-radius:5px}
+.layers li:hover{background:#f2f4f7}
+.layers input{width:16px;height:16px;accent-color:#22409a}
+.layers .sym{width:26px;height:26px;flex:none;display:grid;place-items:center}
+.layers .name{flex:1}
+.layers .n{font-size:11.5px;color:var(--mute)}
+.layers .more{display:none;font-size:11.5px;color:var(--mute);padding:0 0 6px 50px;line-height:1.45}
+.layers.open .more{display:block}
+#panel footer{padding:8px 12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--mute)}
+#panel footer a{color:#22409a;cursor:pointer;text-decoration:underline}
+#panel footer #built, #panel footer a{white-space:nowrap}
+#burger{position:absolute;top:10px;left:10px;z-index:1000;width:44px;height:44px;display:none;align-items:center;justify-content:center}
+/* 위 가운데 */
+#top{position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:900;display:flex;flex-direction:column;align-items:center;gap:6px}
+#count{padding:7px 22px;font-size:14px;font-weight:600;color:#22409a;white-space:nowrap}
+#top .row{display:flex;gap:6px}
+#top .row button{padding:6px 18px;font-size:13px;background:#fff;border:1px solid #22409a;color:#22409a;border-radius:4px}
+#basebadge{font-size:11.5px;padding:3px 10px;color:#7a5200;background:#fff7e6;border:1px solid #f5d18a;border-radius:12px;display:none}
+/* 오른쪽 도구 막대 */
+#tools{position:absolute;top:10px;right:10px;z-index:900;display:flex;flex-direction:column;gap:6px;width:64px}
+#tools .grp{display:flex;flex-direction:column;overflow:hidden}
+#tools button{border:0;border-bottom:1px solid var(--line);background:#fff;padding:7px 0 5px;font-size:11px;color:#344054;display:flex;flex-direction:column;align-items:center;gap:2px}
+#tools button:last-child{border-bottom:0}
+#tools button.on{background:#e8eefc;color:#22409a;font-weight:600}
+#tools .lv{font-size:12px;font-weight:600;padding:6px 0;text-align:center;border-bottom:1px solid var(--line)}
+/* 아래 가운데 주소 */
+#addr{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:900;background:rgba(31,42,68,.82);color:#fff;
+  padding:7px 18px;border-radius:6px;font-size:13.5px;white-space:nowrap;max-width:80vw;overflow:hidden;text-overflow:ellipsis}
+/* 팝업 · 모달 */
+.pop{font-size:13px;line-height:1.5;min-width:180px;max-width:260px}
+.pop b{font-size:14px}
+.pop .tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:9px;color:#fff;margin-bottom:4px}
+.pop .note{color:var(--mute);font-size:11.5px;margin-top:4px}
+.kpop{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px 10px;box-shadow:0 2px 10px rgba(16,24,40,.18);position:relative}
+.kpop .x{position:absolute;top:4px;right:6px;border:0;background:none;font-size:15px;color:#98a2b3}
+#modal{position:fixed;inset:0;background:rgba(16,24,40,.35);z-index:2000;display:none;align-items:center;justify-content:center}
+#modal .card{width:min(460px,92vw);max-height:80vh;overflow:auto;padding:16px 18px}
+#modal h3{margin:0 0 10px;font-size:16px}
+#modal .x{float:right;border:0;background:none;font-size:18px}
+#modal input[type=text]{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;font-size:14px}
+#modal .res{list-style:none;padding:0;margin:10px 0 0}
+#modal .res li{padding:8px 6px;border-bottom:1px solid #f0f2f5;cursor:pointer;font-size:13.5px}
+#modal .res li small{color:var(--mute);display:block}
+#modal .res li:hover{background:#f5f7fb}
+#modal p,#modal ol{font-size:13px;line-height:1.6;color:#344054}
+.leaflet-container{background:#e9edf2}
+.dark-tiles{filter:invert(1) hue-rotate(180deg) brightness(.9) contrast(.9)}
+@media (max-width:768px){
+  #panel{display:none;top:0;left:0;width:calc(100vw - 76px);max-height:100%;height:100%;border-radius:0}  /* 오른쪽 도구 막대(56 + 여백 20)를 가리지 않게 */
+  #panel.show{display:flex}
+  #burger{display:flex}
+  #top{left:60px;transform:none;align-items:flex-start;right:80px}
+  #count{padding:6px 12px;font-size:13px}
+  #top .row button{padding:5px 10px}
+  #tools{width:56px}
+  #addr{font-size:12px;bottom:10px;max-width:70vw}
+}
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<button id="burger" class="card" aria-label="메뉴"><svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 5h16M3 11h16M3 17h16" stroke="#22409a" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+<aside id="panel" class="card">
+  <header><span class="brand">안산 밤길지도</span><button id="closePanel">닫기</button></header>
+  <div class="body">
+    <h2>역에서 집까지, 밤길 지도</h2>
+    <div class="desc">
+      <div class="ico"><svg width="34" height="34" viewBox="0 0 34 34"><path d="M22 6a11 11 0 1 0 6 19A12 12 0 0 1 22 6z" fill="#ffd166"/><circle cx="10" cy="27" r="2" fill="#fff"/><path d="M10 27v-6" stroke="#fff" stroke-width="2"/></svg></div>
+      <div>밤 10시부터 막차까지 역에서 내려 걸어서 집에 가는 길을 큰길 · 보안등 있는 골목 · 보안등 없는 골목으로 나눠 보여 줍니다.
+        지구대 · 파출소, 심야 업종 가게, 보안등 위치를 함께 볼 수 있습니다. 공개 자료만 썼고 사람 수는 넣지 않았습니다.</div>
+    </div>
+    <div class="btns"><button id="allOff">전체 해제</button><button id="expand">펼치기</button><button id="srcBtn" class="on">자료 출처</button></div>
+    <ul id="layers" class="layers"></ul>
+  </div>
+  <footer>시연용 · 안산시 공식 서비스 아님 · 공개 자료 <span id="built"></span> · <a id="keyLink">바탕지도 설정</a></footer>
+</aside>
+
+<div id="top">
+  <div id="count" class="card">현 지도의 콘텐츠 수 : 0개</div>
+  <div class="row"><button id="addrSearch">⌂ 주소 이동</button><button id="placeSearch">⌖ 장소 이동</button></div>
+  <div id="basebadge"></div>
+</div>
+
+<div id="tools">
+  <div class="grp card"><button id="baseBtn" title="바탕지도"><svg width="26" height="20" viewBox="0 0 26 20"><rect x="1" y="1" width="24" height="18" rx="3" fill="#cfe3c9"/><path d="M1 13l7-6 6 5 4-3 7 6v2a3 3 0 0 1-3 3H4a3 3 0 0 1-3-3z" fill="#7fb37a"/></svg><span id="baseLabel">일반</span></button></div>
+  <div class="grp card">
+    <button id="dongBtn"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M2 3l5 2 4-2 5 2v10l-5-2-4 2-5-2z" fill="none" stroke="#344054" stroke-width="1.5"/></svg>행정경계</button>
+    <button id="clusterBtn" class="on"><svg width="18" height="18" viewBox="0 0 18 18"><circle cx="6" cy="7" r="3.4" fill="#5b8def"/><circle cx="12" cy="11" r="4" fill="#7aa2f7"/></svg>클러스터</button>
+  </div>
+  <div class="grp card">
+    <button id="locBtn"><svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="6" fill="none" stroke="#344054" stroke-width="1.6"/><circle cx="9" cy="9" r="2.2" fill="#344054"/></svg>내 위치</button>
+    <button id="zin" style="font-size:18px">＋</button><div class="lv" id="lv">Lv -</div><button id="zout" style="font-size:18px">－</button>
+  </div>
+  <div class="grp card"><button id="setBtn"><svg width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="3" fill="none" stroke="#344054" stroke-width="1.6"/><path d="M9 1.5v3M9 13.5v3M1.5 9h3M13.5 9h3M3.7 3.7l2.1 2.1M12.2 12.2l2.1 2.1M3.7 14.3l2.1-2.1M12.2 5.8l2.1-2.1" stroke="#344054" stroke-width="1.5"/></svg>지도설정</button></div>
+</div>
+
+<div id="addr">안산시</div>
+<div id="modal"><div class="card" id="modalBody"></div></div>
+
+<script>
+const DATA = /*__DATA__*/null;
+const KEY_STORE = "ansan_night_map_kakao_js_key";
+const VW_STORE = "ansan_night_map_vworld_key";      // 브이월드(국토교통부) 인증키 — 이 브라우저에만(#22)
+let FORCE_OSM = false;                              // 주소에 ?map=osm — 키가 있어도 OpenStreetMap
+const CENTER = [37.3155, 126.8336];
+const LAYERS = [
+  {id:"major",  name:"큰길(가로등 구간)", kind:"line", color:"#2f6fd6", on:true,
+   more:"역 귀갓길 중 큰길. 안산시 보안등 자료에는 큰길 가로등이 없어 따로 묶었습니다."},
+  {id:"lit",    name:"보안등 있는 골목", kind:"line", color:"#f39c12", on:true,
+   more:"역 귀갓길 중 골목, 길에서 20m 안에 보안등이 있는 블록(교차로 사이)."},
+  {id:"dark",   name:"보안등 없는 골목", kind:"line", color:"#b3261e", on:true,
+   more:"역 귀갓길 중 골목, 블록 전체에 보안등이 없는 곳. 개선 검토 후보입니다."},
+  {id:"police", name:"지구대 · 파출소", kind:"pt", color:"#2e9d5b", glyph:"P", on:true, more:"밤에도 문을 여는 지구대 · 파출소(OpenStreetMap)."},
+  {id:"station",name:"역 · 밤 하차 인원", kind:"pt", color:"#6a4fc8", glyph:"역", on:true, more:"코레일 역별 시간대 하차(밤 10시~막차, 하루 평균)."},
+  {id:"anchor", name:"심야 업종 가게", kind:"pt", color:"#1aa3c8", glyph:"24", on:false, cluster:true, more:"편의점 · 주유소 · PC방(소상공인 상가정보). 영업 시간은 확인하지 못했습니다."},
+  {id:"light",  name:"보안등", kind:"pt", color:"#e8b400", glyph:"", on:false, cluster:true, small:true, more:"안산시 보안등(공공데이터포털)."},
+  {id:"cctv",   name:"CCTV(공개분 일부)", kind:"pt", color:"#6b7280", glyph:"C", on:false, cluster:true, more:"전국 표준데이터의 안산 공개분 500대뿐 — 전수가 아닙니다."},
+  {id:"bell",   name:"비상벨(공개분 일부)", kind:"pt", color:"#8e44ad", glyph:"!", on:false, cluster:true, more:"표준데이터의 안산 공개분 495개뿐 — 전수가 아닙니다."},
+];
+const LINE_NAME = {major:"큰길(가로등 구간)", lit:"보안등 있는 골목", dark:"보안등 없는 골목"};
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const $ = id => document.getElementById(id);
+
+/* ── 팝업 내용 ─────────────────────────────────────────── */
+function popHtml(id, r){
+  const L = LAYERS.find(l => l.id === id) || {color:"#888"};
+  const tag = t => `<span class="tag" style="background:${L.color}">${esc(t)}</span>`;
+  const M = DATA.meta;
+  switch(id){
+    case "major": case "lit": case "dark":
+      return `<div class="pop">${tag("역에서 집 가는 밤길")}<br><b>${LINE_NAME[id]}</b><br>밤 귀갓길 흐름 <b>상위 ${r.i}%</b> · 길이 ${r.m.toLocaleString()}m
+        <div class="note">밤 10시~막차에 역에서 내린 사람이 걸어서 집에 간다고 본 계산(코레일 ${esc(M.month)} · 보행망 최단경로). 지도에 그린 블록 중 순위입니다.</div></div>`;
+    case "police":  return `<div class="pop">${tag(r[3] || "지구대")}<br><b>${esc(r[2])}</b><div class="note">밤에도 문을 엽니다(24시간).</div></div>`;
+    case "station": return `<div class="pop">${tag(r[3] + (r[5] ? " · " + r[5] : ""))}<br><b>${esc(r[2])}역</b><br>밤 10시~막차 하차 하루 평균 <b>${Number(r[4]).toLocaleString()}명</b>
+        <div class="note">코레일 ${esc(M.month)} 역별 시간대 하차${r[5] ? " · 산업단지역은 귀갓길 계산에서 뺐습니다" : ""}</div></div>`;
+    case "anchor":  return `<div class="pop">${tag(r[3] || "심야 업종")}<br><b>${esc(r[2])}</b><div class="note">영업 시간은 확인하지 못했습니다.</div></div>`;
+    case "light":   return `<div class="pop">${tag("보안등")}<br><b>${esc(r[2])}</b><br>${esc(r[3])}${r[4] ? " · " + esc(r[4]) + "년 설치" : ""}
+        <div class="note">안산시 보안등 ${esc(M.lights_date)} 기준 · 좌표는 지번 근처입니다.</div></div>`;
+    case "cctv":    return `<div class="pop">${tag("CCTV · 공개분 일부")}<br><b>${esc(r[2])}</b><br>카메라 ${esc(r[3])}대</div>`;
+    case "bell":    return `<div class="pop">${tag("비상벨 · 공개분 일부")}<br><b>${esc(r[2])}</b><br>${esc(r[3])}</div>`;
+  }
+  return "";
+}
+
+/* ── 아이콘(SVG) ─────────────────────────────────────── */
+function pinSvg(L, small){
+  if (small) return `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="4.2" fill="${L.color}" stroke="#5a4500" stroke-width="1.2"/></svg>`;
+  const g = L.glyph.length > 1 ? `<text x="14" y="17.5" text-anchor="middle" font-size="9.5" font-weight="700" fill="${L.color}" font-family="Malgun Gothic,sans-serif">${L.glyph}</text>`
+                               : `<text x="14" y="18" text-anchor="middle" font-size="12" font-weight="700" fill="${L.color}" font-family="Arial,sans-serif">${L.glyph}</text>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36"><path d="M14 35C14 35 2 21 2 13a12 12 0 0 1 24 0c0 8-12 22-12 22z" fill="${L.color}" stroke="#fff" stroke-width="1.6"/><circle cx="14" cy="13.5" r="8" fill="#fff"/>${g}</svg>`;
+}
+const svgUrl = s => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s);
+
+/* ── 지도 엔진 두 가지 — 같은 이름의 함수만 쓴다 ─────────────── */
+let E = null;                  // 엔진
+const H = {};                  // 레이어 id → 표시 객체들
+const STATE = {cluster:true, dong:false, base:0};
+
+function pointsOf(id){ return DATA[id] || []; }
+function linesOf(id){ return DATA.walk.filter(w => w.k === id); }
+
+const Leaf = {
+  name:"osm",
+  init(vkey){
+    const m = L.map("map", {zoomControl:false, attributionControl:true, minZoom:10, maxZoom:19, preferCanvas:true}).setView(CENTER, 13);
+    // 키 없이 쓰는 바탕 — OpenStreetMap 기본 타일(CARTO 바탕은 2024년부터 키를 요구한다). '어두운'은 같은 타일에 색 반전 필터
+    const osm = cls => L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom:19, className:cls,
+        attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'});
+    // 브이월드 배경지도(WMTS · 공공누리 1유형) — 인증키가 있을 때. 'midnight' 는 브이월드의 야간 지도(색 반전 없이)
+    const vw = layer => L.tileLayer(`https://api.vworld.kr/req/wmts/1.0.0/${encodeURIComponent(vkey)}/${layer}/{z}/{y}/{x}.png`,
+        {maxZoom:19, attribution:'&copy; <a href="https://www.vworld.kr">브이월드</a>(국토교통부)'});
+    this.m = m;
+    this.bases = vkey ? [{label:"일반", layer:vw("Base"), vw:true}, {label:"야간", layer:vw("midnight"), vw:true},
+                         {label:"OSM", layer:osm("")}, {label:"OSM 어두운", layer:osm("dark-tiles")}]
+                      : [{label:"일반", layer:osm("")}, {label:"어두운", layer:osm("dark-tiles")}];
+    this.bases.filter(b => b.vw).forEach(b => this.watch(b));
+    this.bases[0].layer.addTo(m);
+    this.pop = L.popup({maxWidth:280});
+    m.on("moveend zoomend", () => onIdle());
+    return this;
+  },
+  watch(b){                       // 키가 틀리면 브이월드는 그림 대신 XML 을 보내 타일이 깨진다 → 그 바탕을 빼고 다음 것으로
+    let ok = 0, bad = 0;
+    b.layer.on("tileload", () => ok++);
+    b.layer.on("tileerror", () => { if (++bad >= 4 && !ok) this.drop(b); });
+  },
+  drop(b){
+    const i = this.bases.indexOf(b);
+    if (i < 0) return;
+    const shown = this.m.hasLayer(b.layer);
+    this.m.removeLayer(b.layer); this.bases.splice(i, 1);
+    if (shown){ STATE.base = 0; this.bases[0].layer.addTo(this.m); $("baseLabel").textContent = this.bases[0].label; }
+    else if (STATE.base > i) STATE.base--;
+    if (!this.bases.some(x => x.vw)){
+      const bb = $("basebadge"); bb.textContent = "브이월드 지도를 못 불러왔습니다(인증키 · 서비스 URL 확인) · OpenStreetMap 바탕"; bb.style.display = "block";
+    }
+  },
+  setBase(i){ this.bases.forEach((b, k) => k === i ? b.layer.addTo(this.m) : this.m.removeLayer(b.layer)); return this.bases[i].label; },
+  baseCount(){ return this.bases.length; }, baseLabel(i){ return this.bases[i].label; },
+  line(path, color, weight, html){                      // 흰 테두리와 색 선을 따로 — 테두리를 모두 먼저 그려야 선이 끊겨 보이지 않는다
+    const casing = L.polyline(path, {color:"#ffffff", weight:weight + 3, opacity:.85, interactive:false});
+    const p = L.polyline(path, {color, weight, opacity:.92});
+    p.on("click", e => this.pop.setLatLng(e.latlng).setContent(html()).openOn(this.m));
+    return {casing, p};
+  },
+  lineGroup(parts){ return L.layerGroup([L.layerGroup(parts.map(x => x.casing)), L.layerGroup(parts.map(x => x.p))]); },
+  fit(b, left){ this.m.fitBounds([[b.s, b.w], [b.n, b.e]], {paddingTopLeft:[left || 30, 30], paddingBottomRight:[80, 40]}); },
+  marker(lat, lng, Lr, html){
+    const sz = Lr.small ? [12, 12] : [28, 36];
+    const icon = L.icon({iconUrl:svgUrl(pinSvg(Lr, Lr.small)), iconSize:sz, iconAnchor:Lr.small ? [6, 6] : [14, 35], popupAnchor:[0, Lr.small ? -4 : -30]});
+    return L.marker([lat, lng], {icon}).bindPopup(() => html(), {maxWidth:280});
+  },
+  group(items, cluster){
+    if (cluster && STATE.cluster){ const g = L.markerClusterGroup({maxClusterRadius:48, disableClusteringAtZoom:17, chunkedLoading:true}); g.addLayers(items); return g; }
+    return L.layerGroup(items);
+  },
+  show(obj, on){ on ? obj.addTo(this.m) : this.m.removeLayer(obj); },
+  polygon(rings){ return L.polygon(rings, {color:"#3b4a6b", weight:1.6, dashArray:"5 4", fill:false, interactive:false}); },
+  label(lat, lng, text){ return L.marker([lat, lng], {interactive:false, icon:L.divIcon({className:"", html:`<div style="font-size:12px;font-weight:700;color:#3b4a6b;text-shadow:0 0 3px #fff,0 0 3px #fff;white-space:nowrap;transform:translate(-50%,-50%)">${esc(text)}</div>`})}); },
+  bounds(){ const b = this.m.getBounds(); return {s:b.getSouth(), w:b.getWest(), n:b.getNorth(), e:b.getEast()}; },
+  center(){ const c = this.m.getCenter(); return [c.lat, c.lng]; },
+  level(){ return this.m.getZoom(); },
+  zoom(d){ d > 0 ? this.m.zoomIn() : this.m.zoomOut(); },
+  go(lat, lng, z){ this.m.setView([lat, lng], z || 17); },
+  openAt(lat, lng, html){ this.pop.setLatLng([lat, lng]).setContent(html).openOn(this.m); },
+  youAreHere(lat, lng){ if (this.me) this.m.removeLayer(this.me); this.me = L.circleMarker([lat, lng], {radius:8, color:"#fff", weight:3, fillColor:"#2f6fd6", fillOpacity:1}).addTo(this.m); },
+};
+
+const Kak = {
+  name:"kakao",
+  init(){
+    const k = kakao.maps;
+    this.k = k;
+    this.m = new k.Map($("map"), {center:new k.LatLng(CENTER[0], CENTER[1]), level:6});
+    this.geo = new k.services.Geocoder(); this.ps = new k.services.Places();
+    this.ov = new k.CustomOverlay({yAnchor:1.15, zIndex:5});
+    this.bases = [{label:"일반", id:k.MapTypeId.ROADMAP}, {label:"위성", id:k.MapTypeId.HYBRID}];
+    k.event.addListener(this.m, "idle", () => onIdle());
+    k.event.addListener(this.m, "click", () => this.ov.setMap(null));
+    return this;
+  },
+  setBase(i){ this.m.setMapTypeId(this.bases[i].id); return this.bases[i].label; },
+  baseCount(){ return this.bases.length; }, baseLabel(i){ return this.bases[i].label; },
+  LL(lat, lng){ return new this.k.LatLng(lat, lng); },
+  line(path, color, weight, html){
+    const pts = path.map(p => this.LL(p[0], p[1]));
+    const casing = new this.k.Polyline({path:pts, strokeWeight:weight + 3, strokeColor:"#ffffff", strokeOpacity:.85, zIndex:1});
+    const p = new this.k.Polyline({path:pts, strokeWeight:weight, strokeColor:color, strokeOpacity:.92, zIndex:2});
+    this.k.event.addListener(p, "click", e => this.openAt(e.latLng.getLat(), e.latLng.getLng(), html()));
+    return {casing, p};
+  },
+  lineGroup(parts){ return {items:[...parts.map(x => x.casing), ...parts.map(x => x.p)], cluster:null}; },
+  fit(b, left){ const k = this.k; this.m.setBounds(new k.LatLngBounds(new k.LatLng(b.s, b.w), new k.LatLng(b.n, b.e)), 30, 80, 40, left || 30); },
+  marker(lat, lng, Lr, html){
+    const sz = Lr.small ? new this.k.Size(12, 12) : new this.k.Size(28, 36);
+    const img = new this.k.MarkerImage(svgUrl(pinSvg(Lr, Lr.small)), sz, {offset:Lr.small ? new this.k.Point(6, 6) : new this.k.Point(14, 35)});
+    const mk = new this.k.Marker({position:this.LL(lat, lng), image:img, clickable:true});
+    this.k.event.addListener(mk, "click", () => this.openAt(lat, lng, html()));
+    return mk;
+  },
+  group(items, cluster){
+    if (cluster && STATE.cluster) return {items, cluster:new this.k.MarkerClusterer({averageCenter:true, minLevel:4, gridSize:52})};
+    return {items, cluster:null};
+  },
+  show(obj, on){
+    if (obj.cluster){ if (on){ obj.cluster.setMap(this.m); obj.cluster.addMarkers(obj.items); } else { obj.cluster.clear(); obj.cluster.setMap(null); } return; }
+    obj.items.forEach(it => it.setMap(on ? this.m : null));
+  },
+  polygon(rings){ return {items:rings.map(r => new this.k.Polyline({path:r.map(p => this.LL(p[0], p[1])), strokeWeight:2, strokeColor:"#3b4a6b", strokeOpacity:.8, strokeStyle:"shortdash"})), cluster:null}; },
+  label(lat, lng, text){ return new this.k.CustomOverlay({position:this.LL(lat, lng), content:`<div style="font-size:12px;font-weight:700;color:#3b4a6b;text-shadow:0 0 3px #fff,0 0 3px #fff">${esc(text)}</div>`}); },
+  bounds(){ const b = this.m.getBounds(), sw = b.getSouthWest(), ne = b.getNorthEast(); return {s:sw.getLat(), w:sw.getLng(), n:ne.getLat(), e:ne.getLng()}; },
+  center(){ const c = this.m.getCenter(); return [c.getLat(), c.getLng()]; },
+  level(){ return this.m.getLevel(); },
+  zoom(d){ this.m.setLevel(this.m.getLevel() - d, {animate:true}); },
+  go(lat, lng, lv){ this.m.setLevel(lv || 3); this.m.setCenter(this.LL(lat, lng)); },
+  openAt(lat, lng, html){
+    const box = document.createElement("div"); box.className = "kpop"; box.innerHTML = html;
+    const x = document.createElement("button"); x.className = "x"; x.textContent = "×"; x.onclick = () => this.ov.setMap(null); box.appendChild(x);
+    this.ov.setContent(box); this.ov.setPosition(this.LL(lat, lng)); this.ov.setMap(this.m);
+  },
+  youAreHere(lat, lng){ if (this.me) this.me.setMap(null); this.me = new this.k.Circle({center:this.LL(lat, lng), radius:12, strokeWeight:3, strokeColor:"#fff", fillColor:"#2f6fd6", fillOpacity:1}); this.me.setMap(this.m); },
+};
+
+/* ── 레이어 만들기 ─────────────────────────────────────── */
+function build(){
+  LAYERS.forEach(Lr => {
+    if (Lr.kind === "line"){
+      const parts = [];
+      linesOf(Lr.id).forEach(w => w.p.forEach(path => parts.push(E.line(path, Lr.color, Lr.id === "major" ? 5 : 4, () => popHtml(Lr.id, w)))));
+      H[Lr.id] = E.lineGroup(parts);
+    } else {
+      const items = pointsOf(Lr.id).map(r => E.marker(r[0], r[1], Lr, () => popHtml(Lr.id, r)));
+      H[Lr.id] = E.group(items, Lr.cluster);
+    }
+    if (Lr.on) E.show(H[Lr.id], true);
+  });
+  // 행정경계 + 동 이름
+  const polys = [], labels = [];
+  DATA.dong.forEach(d => {
+    polys.push(E.polygon(d.r));
+    const ring = d.r.reduce((a, b) => (b.length > a.length ? b : a));
+    const c = ring.reduce((s, p) => [s[0] + p[0] / ring.length, s[1] + p[1] / ring.length], [0, 0]);
+    labels.push(E.label(c[0], c[1], d.n));
+  });
+  H._dong = E.name === "osm" ? L.layerGroup([...polys, ...labels]) : {items:[...polys.flatMap(p => p.items), ...labels], cluster:null};
+}
+
+function rebuildClusters(){
+  LAYERS.filter(Lr => Lr.cluster).forEach(Lr => {
+    const on = Lr.on; if (on) E.show(H[Lr.id], false);
+    const items = pointsOf(Lr.id).map(r => E.marker(r[0], r[1], Lr, () => popHtml(Lr.id, r)));
+    H[Lr.id] = E.group(items, true);
+    if (on) E.show(H[Lr.id], true);
+  });
+}
+
+/* ── 패널 ──────────────────────────────────────────────── */
+function lineSym(c){ return `<svg width="26" height="14" viewBox="0 0 26 14"><path d="M2 7h22" stroke="#fff" stroke-width="8" stroke-linecap="round"/><path d="M2 7h22" stroke="${c}" stroke-width="5" stroke-linecap="round"/></svg>`; }
+function drawPanel(){
+  const ul = $("layers"); ul.innerHTML = "";
+  LAYERS.forEach(Lr => {
+    const n = Lr.kind === "line" ? linesOf(Lr.id).length : pointsOf(Lr.id).length;
+    const li = document.createElement("li");
+    li.innerHTML = `<input type="checkbox" ${Lr.on ? "checked" : ""} aria-label="${esc(Lr.name)}"><span class="sym">${Lr.kind === "line" ? lineSym(Lr.color) : `<img src="${svgUrl(pinSvg(Lr, Lr.small))}" width="${Lr.small ? 12 : 20}">`}</span>
+      <span class="name">${esc(Lr.name)}</span><span class="n">${n.toLocaleString()}${Lr.kind === "line" ? "블록" : "곳"}</span>`;
+    li.querySelector("input").onchange = e => { Lr.on = e.target.checked; E.show(H[Lr.id], Lr.on); onIdle(); };
+    ul.appendChild(li);
+    const more = document.createElement("li"); more.className = "more"; more.textContent = Lr.more; ul.appendChild(more);
+  });
+}
+
+/* ── 지도 움직일 때 — 콘텐츠 수 · 가운데 주소 · 레벨 ────────────── */
+let idleTimer = null;
+function onIdle(){
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    const b = E.bounds(), inb = (lat, lng) => lat >= b.s && lat <= b.n && lng >= b.w && lng <= b.e;
+    let n = 0;
+    LAYERS.forEach(Lr => {
+      if (!Lr.on) return;
+      if (Lr.kind === "line") linesOf(Lr.id).forEach(w => { const p = w.p[0][Math.floor(w.p[0].length / 2)]; if (inb(p[0], p[1])) n++; });
+      else pointsOf(Lr.id).forEach(r => { if (inb(r[0], r[1])) n++; });
+    });
+    $("count").textContent = `현 지도의 콘텐츠 수 : ${n.toLocaleString()}개`;
+    $("lv").textContent = `Lv ${E.level()}`;
+    centerAddress();
+  }, 150);
+}
+function dongAt(lat, lng){
+  const inside = (pt, ring) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++){
+      const [yi, xi] = ring[i], [yj, xj] = ring[j];
+      if (((yi > pt[0]) !== (yj > pt[0])) && (pt[1] < (xj - xi) * (pt[0] - yi) / (yj - yi) + xi)) c = !c; } return c; };
+  const d = DATA.dong.find(d => d.r.some(r => inside([lat, lng], r)));
+  return d ? d.n : null;
+}
+function centerAddress(){
+  const [lat, lng] = E.center();
+  if (E.name === "kakao"){
+    E.geo.coord2Address(lng, lat, (res, st) => {
+      if (st === kakao.maps.services.Status.OK && res[0]){ const a = res[0].road_address || res[0].address; $("addr").textContent = a.address_name; }
+      else $("addr").textContent = "경기도 안산시" + (dongAt(lat, lng) ? " " + dongAt(lat, lng) : "");
+    });
+  } else {
+    const d = dongAt(lat, lng);
+    $("addr").textContent = d ? `경기도 안산시 ${d} 일대` : "안산시 바깥";
+  }
+}
+
+/* ── 검색 (카카오: 그때그때 부르고 저장하지 않는다 · 없으면 지도 안 이름에서) ── */
+function localIndex(){
+  const out = [];
+  pointsOf("station").forEach(r => out.push({t:r[2] + "역", s:r[3] + " · 역", lat:r[0], lng:r[1]}));
+  pointsOf("police").forEach(r => out.push({t:r[2], s:r[3], lat:r[0], lng:r[1]}));
+  pointsOf("anchor").forEach(r => out.push({t:r[2], s:r[3] + " · 심야 업종", lat:r[0], lng:r[1]}));
+  DATA.dong.forEach(d => { const ring = d.r[0]; const c = ring.reduce((s, p) => [s[0] + p[0] / ring.length, s[1] + p[1] / ring.length], [0, 0]); out.push({t:d.n, s:"행정동", lat:c[0], lng:c[1], lv:15}); });
+  return out;
+}
+function openSearch(kind){
+  const title = kind === "addr" ? "주소 이동" : "장소 이동";
+  const hint = E.name === "kakao" ? (kind === "addr" ? "도로명 · 지번 주소(예: 안산시 단원구 고잔동)" : "장소 이름(예: 중앙역, 상록수역)")
+                                  : "역 · 지구대 · 가게 · 동 이름(카카오 키를 넣으면 주소 검색도 됩니다)";
+  modal(`<button class="x" onclick="closeModal()">×</button><h3>${title}</h3><input type="text" id="q" placeholder="${hint}"><ul class="res" id="res"></ul>`);
+  const q = $("q"); q.focus();
+  const show = items => { $("res").innerHTML = items.slice(0, 30).map((it, i) => `<li data-i="${i}">${esc(it.t)}<small>${esc(it.s || "")}</small></li>`).join("") || "<li>찾은 곳이 없습니다</li>";
+    [...$("res").querySelectorAll("li[data-i]")].forEach(li => li.onclick = () => { const it = items[+li.dataset.i]; closeModal(); E.go(it.lat, it.lng, E.name === "kakao" ? 3 : (it.lv || 17)); }); };
+  q.onkeydown = e => {
+    if (e.key !== "Enter" || !q.value.trim()) return;
+    const v = q.value.trim();
+    if (E.name === "kakao"){
+      const S = kakao.maps.services.Status;
+      if (kind === "addr") E.geo.addressSearch(v, (r, st) => show(st === S.OK ? r.map(x => ({t:x.address_name, s:x.road_address ? x.road_address.address_name : "", lat:+x.y, lng:+x.x})) : []));
+      else E.ps.keywordSearch(v, (r, st) => show(st === S.OK ? r.map(x => ({t:x.place_name, s:x.road_address_name || x.address_name, lat:+x.y, lng:+x.x})) : []),
+                              {location:E.LL(CENTER[0], CENTER[1]), radius:20000});
+    } else {
+      show(localIndex().filter(it => it.t.includes(v) || (it.s || "").includes(v)));
+    }
+  };
+}
+
+/* ── 모달 · 설정 · 출처 ─────────────────────────────────── */
+function modal(html){ $("modalBody").innerHTML = html; $("modal").style.display = "flex"; }
+function closeModal(){ $("modal").style.display = "none"; }
+$("modal").onclick = e => { if (e.target.id === "modal") closeModal(); };
+function settings(){
+  const k = localStorage.getItem(KEY_STORE) || "", v = localStorage.getItem(VW_STORE) || "";
+  const now = E.name === "kakao" ? "카카오 지도" : (E.bases.some(b => b.vw) ? "브이월드" : "OpenStreetMap");
+  modal(`<button class="x" onclick="closeModal()">×</button><h3>지도설정 — 바탕지도</h3>
+    <p>키가 없어도 OpenStreetMap 바탕으로 볼 수 있습니다. 두 키가 다 있으면 카카오가 먼저입니다.</p>
+    <p><b>브이월드(국토교통부)</b> — 일반 · 야간 지도. 자료 수집용으로 받는 브이월드 인증키를 같이 씁니다.</p>
+    <ol><li>vworld.kr → 오픈API → 인증키 발급 — 배경지도(WMTS)도 쓰도록 신청</li><li>서비스 URL: <b>http://localhost:8787</b></li></ol>
+    <input type="text" id="vk" value="${esc(v)}" placeholder="브이월드 인증키 붙여넣기">
+    <p style="margin-top:14px"><b>카카오 지도</b> — 주소 · 장소 검색까지 됩니다.</p>
+    <ol><li>developers.kakao.com → 내 애플리케이션 → 앱 만들기</li><li>앱 키의 <b>JavaScript 키</b> 복사</li>
+      <li>플랫폼 → Web → 사이트 도메인에 <b>http://localhost:8787</b> 등록</li><li>카카오맵 → 사용 설정 <b>ON</b></li></ol>
+    <input type="text" id="kk" value="${esc(k)}" placeholder="JavaScript 키 붙여넣기">
+    <p style="margin-top:10px"><button id="kSave">저장하고 다시 열기</button> <button id="kDel">키 모두 지우기(OpenStreetMap)</button></p>
+    <p style="color:#667085">키는 이 브라우저에만 저장됩니다. 지금: <b>${now}</b></p>`);
+  const put = (s, x) => x ? localStorage.setItem(s, x) : localStorage.removeItem(s);
+  $("kSave").onclick = () => { put(VW_STORE, $("vk").value.trim()); put(KEY_STORE, $("kk").value.trim()); location.reload(); };
+  $("kDel").onclick = () => { localStorage.removeItem(KEY_STORE); localStorage.removeItem(VW_STORE); location.reload(); };
+}
+function sources(){
+  const M = DATA.meta;
+  modal(`<button class="x" onclick="closeModal()">×</button><h3>자료 출처</h3>
+    <ol><li>역에서 집 가는 밤길 — 코레일 역별 시간대 하차(${esc(M.month)}) × OpenStreetMap 보행망 최단경로 × 집 쪽 안분(SGIS 1km 인구 · OSM 주거건물).
+        블록마다 하루 평균 ${M.walk_min}명 이상 지나고 길이 ${M.walk_len}m 이상인 곳만 그렸습니다. 내린 사람이 모두 걷는다고 본 계산이라 순위(상위 %)로만 보여 줍니다.</li>
+      <li>보안등 — 공공데이터포털 전국보안등정보표준데이터 중 안산시(${esc(M.lights_date)}). 큰길 가로등은 없습니다.</li>
+      <li>지구대 · 파출소 · 역 위치 — OpenStreetMap.</li>
+      <li>심야 업종 가게 — 소상공인시장진흥공단 상가(상권)정보.</li>
+      <li>CCTV · 비상벨 — 공공데이터포털 표준데이터 안산 공개분(일부).</li>
+      <li>행정경계 — SGIS.</li></ol>
+    <p>사람 수(통신 · 카드 등 민간 자료)는 이 지도에 넣지 않았습니다. 화면 구성은 서울시 스마트서울맵 테마지도를 참고했습니다. 만든 날 ${esc(M.built)}.</p>
+    <p><b>안산시 공식 서비스가 아닙니다.</b> 서비스 아이디어를 보여 주는 시연용 지도이며, 범죄 여부는 알려 주지 않습니다.</p>`);
+}
+
+/* ── 도구 막대 · 버튼 ───────────────────────────────────── */
+function wire(){
+  $("baseBtn").onclick = () => { STATE.base = (STATE.base + 1) % E.baseCount(); $("baseLabel").textContent = E.setBase(STATE.base); };
+  $("baseLabel").textContent = E.baseLabel(0);
+  $("dongBtn").onclick = () => { STATE.dong = !STATE.dong; $("dongBtn").classList.toggle("on", STATE.dong); E.show(H._dong, STATE.dong); };
+  $("clusterBtn").onclick = () => { STATE.cluster = !STATE.cluster; $("clusterBtn").classList.toggle("on", STATE.cluster); rebuildClusters(); };
+  $("zin").onclick = () => E.zoom(1); $("zout").onclick = () => E.zoom(-1);
+  $("locBtn").onclick = () => {
+    if (!navigator.geolocation) return alert("이 브라우저는 위치를 지원하지 않습니다");
+    navigator.geolocation.getCurrentPosition(p => { E.go(p.coords.latitude, p.coords.longitude, E.name === "kakao" ? 3 : 17); E.youAreHere(p.coords.latitude, p.coords.longitude); },
+                                             () => alert("위치를 가져오지 못했습니다(브라우저 위치 권한 확인)"));
+  };
+  $("setBtn").onclick = settings; $("keyLink").onclick = settings;
+  $("addrSearch").onclick = () => openSearch("addr"); $("placeSearch").onclick = () => openSearch("place");
+  $("allOff").onclick = () => {
+    const anyOn = LAYERS.some(l => l.on);
+    LAYERS.forEach(Lr => { if (Lr.on === anyOn){ Lr.on = !anyOn; E.show(H[Lr.id], Lr.on); } });
+    $("allOff").textContent = anyOn ? "전체 켜기" : "전체 해제"; drawPanel(); onIdle();
+  };
+  $("expand").onclick = () => { const open = $("layers").classList.toggle("open"); $("expand").textContent = open ? "접기" : "펼치기"; $("expand").classList.toggle("on", open); };
+  $("srcBtn").onclick = sources;
+  $("closePanel").onclick = () => { $("panel").classList.remove("show"); if (innerWidth > 768) $("panel").style.display = "none", $("burger").style.display = "flex"; };
+  $("burger").onclick = () => { $("panel").classList.add("show"); $("panel").style.display = ""; if (innerWidth > 768) $("burger").style.display = "none"; };
+  $("built").textContent = DATA.meta.built;
+}
+
+/* ── 시작 — 카카오 키가 있으면 카카오, 없거나 실패하면 OpenStreetMap ─────── */
+function dataBounds(){                                     // 역 귀갓길 + 역이 다 들어오게
+  const b = {s:90, w:180, n:-90, e:-180}, add = (lat, lng) => { b.s = Math.min(b.s, lat); b.n = Math.max(b.n, lat); b.w = Math.min(b.w, lng); b.e = Math.max(b.e, lng); };
+  DATA.walk.forEach(w => w.p.forEach(path => path.forEach(p => add(p[0], p[1]))));
+  pointsOf("station").forEach(r => add(r[0], r[1]));
+  return b;
+}
+function start(){
+  build(); drawPanel(); wire();
+  const b = dataBounds();
+  if (innerWidth <= 768) E.go((b.s + b.n) / 2, (b.w + b.e) / 2, E.name === "kakao" ? 6 : 13);   // 폰: 가운데에서 조금 가깝게
+  else E.fit(b, 340);                                                                           // PC: 왼쪽 패널만큼 비켜서 전체
+  onIdle();
+}
+function startLeaflet(note){
+  const vkey = FORCE_OSM ? "" : (localStorage.getItem(VW_STORE) || "");
+  E = Leaf.init(vkey); start();
+  const bb = $("basebadge");
+  bb.textContent = note ? `${note} · ${vkey ? "브이월드" : "OpenStreetMap"} 바탕` : "OpenStreetMap 바탕 · 지도설정에서 브이월드 · 카카오 키를 넣을 수 있습니다";
+  bb.style.display = (note || !vkey) ? "block" : "none";
+}
+function startKakao(key){
+  let done = false;
+  const s = document.createElement("script");
+  s.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(key)}&libraries=services,clusterer&autoload=false`;
+  s.onload = () => { try { kakao.maps.load(() => { done = true; E = Kak.init(); start(); }); } catch (e) { fallback(); } };
+  s.onerror = fallback; document.head.appendChild(s);
+  setTimeout(() => { if (!done) fallback(); }, 8000);
+  function fallback(){ if (done) return; done = true; loadLeaflet(() => startLeaflet("카카오 지도를 못 불러왔습니다(키 · 등록 도메인 확인)")); }
+}
+function loadLeaflet(cb){
+  const a = document.createElement("script"); a.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+  a.onload = () => { const b = document.createElement("script"); b.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js"; b.onload = cb; document.head.appendChild(b); };
+  document.head.appendChild(a);
+}
+(function(){
+  const qs = new URLSearchParams(location.search);
+  if (qs.get("kakao")) localStorage.setItem(KEY_STORE, qs.get("kakao"));
+  if (qs.get("vworld")) localStorage.setItem(VW_STORE, qs.get("vworld"));
+  FORCE_OSM = qs.get("map") === "osm";
+  const key = FORCE_OSM ? "" : (localStorage.getItem(KEY_STORE) || "");
+  key ? startKakao(key) : loadLeaflet(() => startLeaflet());
+})();
+</script>
+</body>
+</html>

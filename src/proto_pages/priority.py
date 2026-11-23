@@ -19,17 +19,21 @@ st.caption(f"{UI.when(S)} · 밤 귀갓길이 많이 지나는데 사람이 드�
 UI.notice(formal=True)
 
 use = NC.trip_usage(W.inc, W.W[:, S])
-dark = W.eact[S] < W.thr
+dark = UI.dark_mask(S)               # 실데이터 판은 '자료 부족'(가린 칸)을 뺀다(#19)
 lab_e, seg = NC.segments(G, dark & (use > 0))
 if seg.empty:
     st.info("이 시간에는 해당하는 구간이 없습니다.")
     st.stop()
-df = pd.DataFrame({"seg": lab_e, "score": use * G.length, "lit": W.lit})
-agg = df[df.seg >= 0].groupby("seg").agg(score=("score", "sum"), lit=("lit", "sum"))
+df = pd.DataFrame({"seg": lab_e, "score": use * G.length, "lit": W.lit, "major_m": W.major * G.length})
+agg = df[df.seg >= 0].groupby("seg").agg(score=("score", "sum"), lit=("lit", "sum"), major_m=("major_m", "sum"))
 n_seg = len(seg)
 seg = seg.join(agg, on="seg").sort_values("score", ascending=False).reset_index(drop=True).head(N)
 seg["지수"] = (100 * seg["score"] / seg["score"].max()).round().astype(int)
-seg["검토 방향"] = np.where(seg["lit"] > 0, "심야 편의시설·동선 검토", "조명 설치 검토")
+# 큰길(MAJOR_ROAD)은 가로등 구간 — 보안등 자료 밖이라 '조명 설치'로 판정하지 않는다(수정사항 #15)
+big = seg["major_m"] > seg["len_m"] / 2
+seg["검토 방향"] = np.where(big, "큰길(가로등 구간) · 동선 검토",
+                         np.where(seg["lit"] > 0, "심야 편의시설·동선 검토",
+                                  "보안등 설치 검토" if W.real else "조명 설치 검토"))
 
 c = st.columns(3)
 c[0].metric("분석한 귀갓길", f"{W.W.shape[0]:,}건",
@@ -69,7 +73,9 @@ show["len_m"] = show["len_m"].round().astype(int)
 cols = ["순위", "dong", "len_m", "지수", "lit", "검토 방향"] + (["돌아갈 길"] if "돌아갈 길" in show else [])
 t = show[cols].rename(columns={"dong": "동", "len_m": "길이(m)", "지수": "귀갓길 지수", "lit": "보안등"})
 st.dataframe(t, hide_index=True, width="stretch")
-st.caption("돌아갈 길이 없는 구간은 길 안내로 해결되지 않아, 시설 개선을 먼저 검토할 곳입니다.")
+st.caption("돌아갈 길이 없는 구간은 길 안내로 해결되지 않아, 시설 개선을 먼저 검토할 곳입니다."
+           + (f" 보안등은 안산시 실데이터(2022-12)로, 길에서 {PM.LIGHT_R_M.value}m 안의 개수입니다. "
+              "큰길은 가로등이 따로 관리돼 보안등 자료에 없습니다." if W.real else ""))
 
 colors = np.array([[255, 60, 60], [255, 140, 40], [255, 200, 60]])
 layers = []

@@ -2,10 +2,14 @@
 """
 근거 산출 — 문서에 적힌 숫자를 전부 여기서 다시 만든다.
 실행:  python src/validate.py
+       python src/validate.py --resolution   # + 점수 해상도 가설 실험(#13, 경로 6벌 — 10분 남짓 더 걸린다)
 출력:  data/processed/evidence.json
 
 원칙: 인벤토리 엑셀을 직접 읽어 제약을 산출한다. '규격서에 그렇게 적혀 있다'를
       사람이 옮겨 적지 않는다. 인벤토리가 갱신되면 숫자도 같이 바뀌어야 한다.
+
+--resolution 없이 돌리면 이전 해상도 실험 결과를 입력 지문(셀 · 그래프 · 주거건물 · 상가 · 파라미터 · 계산 코드)이
+같을 때만 그대로 옮겨 둔다. 지문이 다르면 버리고 다시 재라고 알린다.
 """
 import json, pathlib, sys, time
 import numpy as np
@@ -23,7 +27,7 @@ INV = next((_INV_DIR / n for n in
            _INV_DIR / "안산시_민간데이터_데이터셋_인벤토리_v1.0.xlsx")
 BASE = ROOT / "data" / "base"
 sys.path.insert(0, str(ROOT / "src"))
-import params as PM, score as SC, route as RT
+import params as PM, score as SC, route as RT, alloc as AL
 
 E = {}
 
@@ -102,9 +106,9 @@ def e_nightlife():
 # 4. 가중합의 불안정 (기획 원안 재현)
 def e_sensitivity(c, n, e, pairs, curve_pairs):
     """기획 원안의 가중합을 그대로 재현해 가중치가 결과를 지배하는지 본다.
-    점수는 셀에서 매기고 노드(n)가 물려받는다."""
+    점수는 셀에서 매기고 노드(n)가 물려받는다. c["flow"] = 점수 첫 항(alloc.flow, 기본은 pop_night 그대로)."""
     cell = n["cell"].to_numpy()
-    f = SC.pct(c["pop_night"])
+    f = SC.pct(c["flow"])
     a = SC.pct(-c["anchor_d"])
     res = {}
     for w in [0.25, 0.5, 1.0, 2.0, 4.0]:
@@ -124,7 +128,7 @@ def e_sensitivity(c, n, e, pairs, curve_pairs):
     log(f"[민감도] 가중합 w=0.25 vs w=4 : 경로 간선 일치도 {E['w_jaccard_mean']:.0%} · "
         f"{E['w_changed_pct']:.0f}%의 쌍에서 경로가 바뀜 -> 가중치가 결과를 지배한다")
 
-    act = SC.cell_score(c)[0][cell]
+    act = SC.cell_score(c, flow_col="flow")[0][cell]
     ee = SC.edge_score(n, e, act)
     thr = SC.dark_threshold(ee, PM.DARK_Q.value)
     g = RT.build(n, ee)
@@ -168,6 +172,132 @@ def e_route(G, thr, pairs):
     log(f"[경로] 우회예산을 다 못 쓴 쌍 {E['alpha_saturated_pct']:.0f}%")
 
 
+# 7. 점수 해상도 가설 (#13) — '1km 균등 안분이 지금의 병목인가'
+RES_DETOURS = [0.0, 0.1, 0.2, 0.4]
+# (이름, 유동 안분 POP_ALLOC, 주거건물 규모 HOME_W, 활성 규칙)
+#   활성 규칙 min = 본체 현행(score.cell_score) · lex = 사전식 동점 처리(alloc.act_lex = 시연판 ACT_TIEBREAK)
+#   homes 는 0 인 셀이 많아 min 규칙에서는 저활성 임계가 동점 값에 걸린다 → 경로 비교는 lex 로 한다(동점 측정은 아래에서 함께 찍는다)
+RES_RUNS = [
+    ("uniform·min", "uniform", "size", "min"),            # 현행 — e_sensitivity · e_route 값과 같아야 한다(자기 검증)
+    ("homes_or_shops·min", "homes_or_shops", "size", "min"),
+    ("uniform·lex", "uniform", "size", "lex"),
+    ("homes·lex", "homes", "size", "lex"),
+    ("homes_or_shops·lex", "homes_or_shops", "size", "lex"),
+    ("homes(count)·lex", "homes", "count", "lex"),           # 태그 편차 대조 — 건물마다 1
+    ("homes(shuffled)·lex", "homes", "shuffled", "lex"),     # 대조군 — 같은 1km 안에서 자리만 무작위
+]
+
+
+def res_signature():
+    """해상도 실험 입력의 지문. 이것이 같으면 --resolution 없이 돌려도 이전 결과를 옮겨 둔다."""
+    import hashlib
+    h = hashlib.sha256()
+    for f in (P / "cells.csv", P / "nodes.csv", P / "edges.csv", BASE / "osm_homes.json", BASE / "poi.csv",
+              ROOT / "src" / "alloc.py", ROOT / "src" / "score.py", ROOT / "src" / "route.py",
+              ROOT / "src" / "validate.py"):
+        h.update(f.read_bytes())
+    for p in PM.P + PM.EXP:
+        h.update(f"{p.name}={p.value}".encode("utf-8"))
+    return h.hexdigest()[:16]
+
+
+def _res_route(n, e, pairs, f, a, rule):
+    """유동 · 앵커 분위 하나로 그래프를 만들고 같은 쌍 · 같은 δ 로 경로 지표를 잰다."""
+    act_c = np.minimum(f, a) if rule == "min" else AL.act_lex(f, a)
+    ee = SC.edge_score(n, e, act_c[n["cell"].to_numpy()])
+    thr = SC.dark_threshold(ee, PM.DARK_Q.value)
+    L, act = ee["len_m"].to_numpy(), ee["act"].to_numpy()
+    out = {"thr": round(thr, 4),
+           "dark_len_pct": round(float(L[act < thr].sum() / L.sum()) * 100, 1),
+           "tie_at_thr_pct": round(float(L[np.abs(act - thr) < 1e-12].sum() / L.sum()) * 100, 1)}
+    if pairs is None:                                   # 임계 · 동점만
+        return out, None
+    G = RT.build(n, ee)
+    curve, R = [], None
+    for d in RES_DETOURS:
+        r = [RT.plan(G, s, t, d, thr) for s, t in pairs]
+        curve.append(float(np.mean([x["best"]["dark_m"] for x in r])))
+        if abs(d - PM.DETOUR.value) < 1e-9:
+            R = r
+    b = pd.DataFrame([{"L0": r["base"]["len_m"], "D0": r["base"]["dark_m"], "W0": r["base"]["worst_run_m"],
+                       "L1": r["best"]["len_m"], "D1": r["best"]["dark_m"], "W1": r["best"]["worst_run_m"],
+                       "a": r["alpha"]} for r in R])
+    m = b[b.D0 > 0]
+    out.update({
+        "curve_dark_m": [round(x) for x in curve],
+        "detour_resp_pct": round((1 - curve[-1] / curve[0]) * 100, 1) if curve[0] else None,
+        "pairs_with_dark": int(len(m)),
+        "dark_before_m": round(float(m.D0.mean()), 1), "dark_after_m": round(float(m.D1.mean()), 1),
+        "dark_cut_pct": round((1 - m.D1.mean() / m.D0.mean()) * 100, 1),
+        "worst_before_m": round(float(m.W0.mean()), 1), "worst_after_m": round(float(m.W1.mean()), 1),
+        "extra_pct": round(float((m.L1 / m.L0 - 1).mean()) * 100, 1),
+        "alpha_saturated_pct": round(float((b.a >= PM.ALPHA_MAX.value * .999).mean()) * 100, 1),
+    })
+    return out, [frozenset(map(frozenset, zip(r["path"][:-1], r["path"][1:]))) for r in R]
+
+
+def e_resolution(c, n, e, pairs):
+    """CLAUDE.md §7 의 미검증 가설 '점수 해상도(1km 균등 안분)가 지금의 병목이다' 를 잰다.
+    1km 합계는 그대로 두고 1km 안 분포만 바꾼 유동 값으로 같은 120쌍 · 같은 경로 엔진 · 같은 δ 를 다시 돌린다."""
+    t0 = time.time()
+    b, anc = AL.blocks(c), c["anchor_n"].to_numpy() > 0
+    w = {"size": AL.home_weight(c, "size"), "count": AL.home_weight(c, "count")}
+    w["shuffled"] = AL.shuffled(w["size"], b, PM.RES_SHUFFLE_SEED.value)
+    shops = AL.shop_count(c)
+    R = {"sig": res_signature(), "pairs": len(pairs), "detours": RES_DETOURS,
+         "anchor_cells": int(anc.sum()), "anchor_cells_no_home_pct": round(float((w["size"][anc] == 0).mean()) * 100, 1),
+         "cells": {}, "runs": {}}
+    log(f"[해상도] 앵커 셀 {R['anchor_cells']:,}개 중 주거건물 0 {R['anchor_cells_no_home_pct']}% "
+        f"· 상가(앵커·유흥 제외) 반경 {PM.ANCHOR_R_M.value}m 1곳 이상 셀 {(shops > 0).mean():.1%}")
+    fa = {}
+    for name, mode, hw in [("uniform", "uniform", "size"), ("homes", "homes", "size"),
+                           ("homes(count)", "homes", "count"), ("homes(shuffled)", "homes", "shuffled"),
+                           ("homes_or_shops", "homes_or_shops", "size")]:
+        fv = AL.flow(c, mode, w=w[hw], shops=shops)
+        _, f, a = SC.cell_score(c.assign(flow=fv), flow_col="flow")
+        fa[(mode, hw)] = (f, a)
+        nun = pd.Series(fv).groupby(b).nunique()
+        R["cells"][name] = {
+            "blocks_const": int((nun == 1).sum()), "blocks": int(len(nun)),
+            "zero_flow_cells_pct": round(float((fv == 0).mean()) * 100, 1),
+            "flow_binding_pct": round(float((f < a).mean()) * 100, 1),
+            "anchor_cells_flow_low_pct": round(float((f[anc] < PM.DARK_Q.value).mean()) * 100, 1)}
+        x = R["cells"][name]
+        log(f"[해상도] {name:15s} 값이 1km 안에서 한 가지뿐인 블록 {x['blocks_const']}/{x['blocks']} · "
+            f"유동 0 셀 {x['zero_flow_cells_pct']}% · min 이 유동을 따르는 셀 {x['flow_binding_pct']}% · "
+            f"앵커 셀 중 유동 하위 {PM.DARK_Q.value:.0%} {x['anchor_cells_flow_low_pct']}%")
+    # min 규칙에서 homes 의 임계 동점 — 경로는 안 돌리고 왜 lex 로 비교하는지만 남긴다
+    f, a = fa[("homes", "size")]
+    R["runs"]["homes·min"], _ = _res_route(n, e, None, f, a, "min")
+    x = R["runs"]["homes·min"]
+    log(f"[해상도] homes·min 임계 {x['thr']} · 저활성(임계 미만) 길이 {x['dark_len_pct']}% · 임계와 같은 값 {x['tie_at_thr_pct']}% "
+        f"-> 하위 {PM.DARK_Q.value:.0%} 정의가 동점에 걸려 경로 비교 불가, lex 로 비교")
+    paths = {}
+    for name, mode, hw, rule in RES_RUNS:
+        f, a = fa[(mode, hw)]
+        R["runs"][name], paths[name] = _res_route(n, e, pairs, f, a, rule)
+        base = paths["uniform·" + rule]
+        jac = [len(p & q) / max(len(p | q), 1) for p, q in zip(paths[name], base)]
+        R["runs"][name]["jaccard_vs_uniform"] = round(float(np.mean(jac)), 3)
+        R["runs"][name]["changed_vs_uniform_pct"] = round(float(np.mean([j < 0.999 for j in jac])) * 100, 1)
+        x = R["runs"][name]
+        log(f"[해상도] {name:19s} 임계 {x['thr']:.4f}(저활성 길이 {x['dark_len_pct']}% · 동점 {x['tie_at_thr_pct']}%) · "
+            f"δ곡선 {x['curve_dark_m']}m · δ반응 {x['detour_resp_pct']}% · 저활성쌍 {x['pairs_with_dark']} · "
+            f"노출 {x['dark_before_m']:.0f}->{x['dark_after_m']:.0f}m({x['dark_cut_pct']}%감소) · 거리 +{x['extra_pct']}% · "
+            f"예산 미소진 {x['alpha_saturated_pct']}% · uniform 대비 경로 일치 {x['jaccard_vs_uniform']:.0%}")
+    # 자기 검증 — uniform·min 은 e_sensitivity · e_route 가 낸 본값과 같아야 한다
+    u = R["runs"]["uniform·min"]
+    chk = {"curve": bool(u["curve_dark_m"] == [x["dark_m"] for x in E["detour_curve"]]),
+           "dark_cut_pct": bool(u["dark_cut_pct"] == E["dark_cut_pct"]),
+           "alpha_saturated_pct": bool(u["alpha_saturated_pct"] == E["alpha_saturated_pct"]),
+           "extra_pct": bool(u["extra_pct"] == E["extra_pct"])}
+    R["self_check"] = chk
+    log(f"[해상도] 자기 검증(uniform·min = 본값): {chk} — 본값 곡선 {[x['dark_m'] for x in E['detour_curve']]} · "
+        f"감소 {E['dark_cut_pct']}% · 미소진 {E['alpha_saturated_pct']}% · 거리 +{E['extra_pct']}%")
+    R["sec"] = round(time.time() - t0)
+    E["resolution"] = R
+
+
 # 6. 그래프 상태
 def e_graph(G):
     comp = list(nx.connected_components(G))
@@ -188,9 +318,12 @@ if __name__ == "__main__":
     c = pd.read_csv(P / "cells.csv", encoding="utf-8-sig")      # 점수 격자 100m
     n = pd.read_csv(P / "nodes.csv", encoding="utf-8-sig")      # 그래프 노드 (OSM 보행망)
     e = pd.read_csv(P / "edges.csv")
+    # 점수 첫 항 — POP_ALLOC(기본 uniform = cells.csv 의 pop_night 그대로). 바꿔 보는 실험은 --resolution (#13)
+    c["flow"] = AL.flow(c)
+    E["pop_alloc"] = PM.POP_ALLOC.value
     # 분위는 100m 셀에서 매기고 노드가 물려받는다. 노드로 매기면 교차로 밀집 지역이
     # 과대표집돼 분위의 의미가 달라진다
-    act_cell, _, _ = SC.cell_score(c)
+    act_cell, _, _ = SC.cell_score(c, flow_col="flow")
     act = act_cell[n["cell"].to_numpy()]
     G0 = RT.build(n, SC.edge_score(n, e, act))
     big = e_graph(G0)
@@ -206,6 +339,15 @@ if __name__ == "__main__":
     thr, G = e_sensitivity(c, n, e, pairs[:40], pairs)
     E["dark_threshold"] = round(thr, 4)
     e_route(G, thr, pairs)
+
+    prev = json.loads((P / "evidence.json").read_text(encoding="utf-8")) if (P / "evidence.json").exists() else {}
+    if "--resolution" in sys.argv:
+        e_resolution(c, n, e, pairs)
+    elif prev.get("resolution", {}).get("sig") == res_signature():
+        E["resolution"] = prev["resolution"]
+        log("[해상도] 입력 지문이 같아 이전 실험 결과를 옮겨 둠 (다시 재려면 --resolution)")
+    elif prev.get("resolution"):
+        log("[해상도] 입력이 바뀌어 이전 실험 결과를 버림 — python src/validate.py --resolution 으로 다시 잴 것")
 
     (P / "evidence.json").write_text(
         json.dumps(E, ensure_ascii=False, indent=2, default=str), encoding="utf-8")

@@ -116,9 +116,12 @@
     "동쌍": 576
   },
   "facilities": {
-    "verdict": "공공데이터 표준 규격(임의값)",
-    "보안등": 24929,
-    "CCTV": 2295
+    "verdict": "공개 실데이터(data/public) — 보안등 · 역 하차는 실데이터, CCTV · 비상벨은 공개분 일부(표시만)",
+    "보안등": 9651,
+    "CCTV": 500,
+    "비상벨": 495,
+    "지구대파출소": 20,
+    "역": 14
   },
   "latent_check": {
     "verdict": "임의값 세계의 실제 영업 대비 '문 연 블록' 판정 (적재 코드 검증)",
@@ -129,7 +132,7 @@
   },
   "_meta": {
     "raw": "C:\\Users\\master\\Desktop\\my project\\3안\\data\\synthetic\\raw",
-    "sec": 8.4,
+    "sec": 6.1,
     "slots": 28,
     "cells": 10270,
     "synthetic": true

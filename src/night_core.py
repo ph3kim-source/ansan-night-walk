@@ -54,12 +54,17 @@ def _pct_avg(a):
     return pd.Series(np.ravel(a)).rank(method="average", pct=True).to_numpy().reshape(np.shape(a))
 
 
-def activity(R, V, A_d):
-    """(시간대, 셀) 활성도. R=주민 보행 · V=방문 결제 · A_d=문 연 앵커까지 거리(m). 28개 시간대를 합쳐 분위.
+def activity(R, V, A_d, P=None):
+    """(시간대, 셀) 활성도. R=주민 보행 · V=방문 결제 · A_d=문 연 앵커까지 거리(m) · P=50m 유동인구(DS-032, 있을 때만 · #20).
+    28개 시간대를 합쳐 분위.
 
     반환 dict: act(0~1, 클수록 사람 많고 불 켜짐) · flow · anchor · lo(min) · who(min 을 정한 항)"""
     pR, pV = _pct_min(R), _pct_min(V)
-    flow = _pct_avg(np.maximum(pR, pV))                         # 선언(OR) — 주민이 걷거나 방문객이 있거나
+    if P is None:
+        hi_flow = np.maximum(pR, pV)                            # 선언(OR) — 주민이 걷거나 방문객이 있거나(가중치 없음)
+    else:                                                       # DS-032 가 있으면 두 항을 그것 하나로 대체(FLOW_FORM · #20)
+        hi_flow = _pct_min(P)
+    flow = _pct_avg(hi_flow)
     anchor = _pct_avg(-A_d)
     lo, hi = np.minimum(flow, anchor), np.maximum(flow, anchor)   # 연언(AND) = min
     # 사전식 순위: min 이 같으면 max 가 큰 쪽이 밝다 (가중치 없음)
@@ -81,6 +86,14 @@ def dark_threshold(edge_act, length, q=None):
     q = PM.DARK_Q.value if q is None else q
     df = pd.DataFrame({"act": edge_act.ravel(), "len_m": np.tile(length, edge_act.shape[0])})
     return SC.dark_threshold(df, q)
+
+
+def grades(a, thr, thr_hi, masked=None):
+    """화면 표시 등급 — 0 자료 부족 · 1 사람 드묾 · 2 보통 · 3 사람 많음 (수정사항 #19).
+    민간 실데이터 판은 활성도 0~1 을 그대로 보이지 않고 이 등급만 보인다. 경로 계산에는 쓰지 않는다."""
+    a = np.asarray(a, float)
+    g = np.where(a < thr, 1, np.where(a < thr_hi, 2, 3))
+    return g if masked is None else np.where(np.asarray(masked, bool), 0, g)
 
 
 # ══ 그래프 · 경로 ════════════════════════════════════════════════════
@@ -115,6 +128,22 @@ class NightGraph:
         a, b = np.asarray(path[:-1]), np.asarray(path[1:])
         key = np.minimum(a, b) * self.n + np.maximum(a, b)
         return self._ko[np.searchsorted(self._ks, key)]
+
+    def links(self):
+        """간선별 블록 번호 — 교차로 · 막다른 끝(차수 ≠ 2) 사이의 사슬 하나가 한 블록이다.
+        차수 2인 노드에서 만나는 두 간선을 같은 블록으로 묶는다(임계값 없음). 담당자 화면의 '한 블록' 단위."""
+        deg = np.diff(self._indptr)
+        n2 = np.flatnonzero(deg == 2)
+        e1, e2 = self._eid[self._indptr[n2]], self._eid[self._indptr[n2] + 1]
+        _, lab = connected_components(coo_matrix((np.ones(len(n2)), (e1, e2)), shape=(self.m, self.m)), directed=False)
+        return lab
+
+    def edge_of(self, a, b):
+        """노드 쌍(배열) → 간선 번호. 없는 쌍은 -1 (public_data.station_walk 가 최단경로 나무를 거슬러 올라갈 때 쓴다)."""
+        a, b = np.asarray(a, np.int64), np.asarray(b, np.int64)
+        key = np.minimum(a, b) * self.n + np.maximum(a, b)
+        i = np.clip(np.searchsorted(self._ks, key), 0, len(self._ks) - 1)
+        return np.where(self._ks[i] == key, self._ko[i], -1)
 
     def snap(self, x, y):
         return int(self.tree.query([x, y])[1])
@@ -266,7 +295,7 @@ def build_trips(G, cells, od, terms, cell_res_share, log=print):
     di = {d: i for i, d in enumerate(dong_names)}
     cdong = cells["dong"].map(di).to_numpy()
     cxy = cells[["x", "y"]].to_numpy()
-    V_mean = terms["V"].mean(axis=0)
+    V_mean = terms.get("O", terms["V"]).mean(axis=0)      # 출발 칸 가중치 — 기본은 방문 결제, 실데이터 판은 따로 받는다(#20)
     pair = od.groupby(["o_dong", "d_dong"])["trips"].sum()
     pair = pair[pair > 0]
     o_tot = pair.groupby(level=0).sum()

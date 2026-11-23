@@ -93,10 +93,27 @@ elif len(opts) == 1:
 
 # ── 지도 ───────────────────────────────────────────────────────
 ea = W.eact[S]
+be = best["edges"]
+if W.real and best["dark_m"] >= 5:                       # 보안등(실데이터) — 큰길은 가로등 구간이라 세지 않는다
+    unlit = G.length[be][(ea[be] < W.thr) & ~W.major[be] & (W.lit[be] == 0)].sum()
+    st.caption(f"사람 드문 길 {UI.km(best['dark_m'])} 중 보안등도 없는 골목은 {UI.dark_txt(unlit)}이에요."
+               if unlit >= 5 else "사람 드문 길에도 보안등은 있어요.")
 near = NC.anchors_along(G, best["path"], W.abxy, W.active[:, S])
+cops = (NC.anchors_along(G, best["path"], W.police[["x", "y"]].to_numpy(), np.ones(len(W.police), bool))
+        if len(W.police) else pd.DataFrame(columns=["block", "at_m", "off_m"]))
 layers = [UI.line_layer(G, base["path"], UI.BASE_RGB, 4, "base", 170),
-          UI.path_layer(G, best["edges"], UI.act_rgb(ea[best["edges"]], W.thr), 7, "best")]
+          UI.path_layer(G, best["edges"], UI.route_rgb(best["edges"], ea), 7, "best")]
+if W.real:
+    lamps = UI.lamps_near(best["path"]).copy()
+    lamps["tip"] = "보안등"
+    layers.insert(0, UI.dots(lamps, [255, 244, 200], 3, "lamps", tooltip=False))
 other = None
+if W.priv and not W.has_P:                      # DS-032 가 없는 실데이터 판(#19) — 카드 블록 위치가 없어 시간 축이 약하다
+    st.caption("실데이터 판은 시간에 따른 차이가 약할 수 있어요. 그 시간에 문 연 가게(카드 결제)를 지도 위치에 붙이지 못해 "
+               "사는 사람의 밤 보행만으로 계산하기 때문이에요.")
+elif W.priv:                                    # DS-032 판(#20) — 수치는 코드에 적지 않고 자료에서 잰다(#22)
+    st.caption(f"통신 자료의 0시 값은 23시의 {W.mid_ratio:.0%}예요. 시간대 집계 방식을 확인하기 전이라, "
+               "자정 전후를 비교할 때는 새벽 0~1시가 실제보다 더 드물게 보일 수 있다는 점을 같이 봐 주세요.")
 if st.toggle("다른 시간과 비교", key="cmp_on"):
     names = [UI.when(i) for i in range(len(NC.SLOTS))]
     oth = st.selectbox("비교할 시간", names, index=NC.slot_index(1, 1), key="cmp_slot")
@@ -107,11 +124,19 @@ if len(near):
     a["tip"] = ("출발 후 " + near["at_m"].round(-1).astype(int).map("{:,}m".format).to_numpy() + "\n"
                 + a["names"].fillna("").str.split(" · ").str[0].str.replace(r"\(.*\)", "", regex=True))
     layers.append(UI.dots(a, [80, 220, 255], 22, "anchors"))
+if len(cops):
+    p = W.police.iloc[cops["block"].to_numpy()].copy()
+    p["tip"] = ("출발 후 " + cops["at_m"].round(-1).astype(int).map("{:,}m".format).to_numpy() + "\n"
+                + p["name"] + " (24시간)")
+    layers.append(UI.dots(p, [120, 230, 140], 26, "police"))
 ends = pd.DataFrame({"lon": [o["lon"], d["lon"]], "lat": [o["lat"], d["lat"]], "tip": ["출발", "도착"]})
 layers.append(UI.dots(ends, [255, 255, 255], 30, "ends"))
 mid = G.lonlat[np.asarray(best["path"])].mean(axis=0)
 UI.deck(layers, mid[0], mid[1], zoom=14)
-st.caption("🔴 사람 드문 길 · 🟡 사람 다니는 길 · ⚪ 최단 경로 · 🔵 문 연 가게"
+st.caption(("🔴 사람 드묾 · 🟠 보통 · 🟡 사람 많음 · ⚫ 자료 부족(사는 사람이 적어 가림)" if W.priv
+            else "🔴 사람 드문 길 · 🟡 사람 다니는 길")
+           + " · ⚪ 최단 경로 · " + ("🔵 문 연 가게" if W.hours_known else "🔵 심야 업종 가게(영업 여부 모름)")
+           + (" · 🟢 지구대·파출소 · 작은 점은 보안등" if W.real else "")
            + (" · 🟣 비교한 시간의 경로" if other else ""))
 if other:
     st.markdown(f"**{oth}에는**")
@@ -124,25 +149,39 @@ if other:
 st.subheader("가는 길")
 pr = G.profile(best["edges"], ea, W.thr)
 pb = G.profile(base["edges"], ea, W.thr)
+if W.priv:                                     # 실데이터 판은 연속값 대신 3단계 · 가린 칸은 선을 끊는다(#19)
+    for p, e in ((pr, best["edges"]), (pb, base["edges"])):
+        g = NC.grades(p["act"], W.thr, W.thr_hi, W.emask[np.asarray(e)])
+        p["y"], p["masked"] = np.where(g == 0, np.nan, g).astype(float), g == 0
+        p["dark"] = p["dark"] & ~p["masked"]
+    y_line, y_top = 1.5, 3.45
+else:
+    pr["y"], pb["y"] = pr["act"], pb["act"]
+    pr["masked"] = pb["masked"] = False
+    y_line, y_top = W.thr, 1.05
 fig = go.Figure()
-fig.add_trace(go.Scatter(x=np.r_[pb["from_m"], pb["to_m"].iat[-1]], y=np.r_[pb["act"], pb["act"].iat[-1]],
+fig.add_trace(go.Scatter(x=np.r_[pb["from_m"], pb["to_m"].iat[-1]], y=np.r_[pb["y"], pb["y"].iat[-1]],
                          mode="lines", line=dict(shape="hv", width=1.5, color="rgba(150,150,160,0.8)"),
                          name="최단 경로", hovertemplate="출발 후 %{x:,.0f}m<extra>최단 경로</extra>"))
-fig.add_trace(go.Scatter(x=np.r_[pr["from_m"], pr["to_m"].iat[-1]], y=np.r_[pr["act"], pr["act"].iat[-1]],
+fig.add_trace(go.Scatter(x=np.r_[pr["from_m"], pr["to_m"].iat[-1]], y=np.r_[pr["y"], pr["y"].iat[-1]],
                          mode="lines", line=dict(shape="hv", width=2.5, color="#f5a623"),
                          name="선택한 경로", hovertemplate="출발 후 %{x:,.0f}m<extra>선택한 경로</extra>"))
 for r in pr[pr["dark"]].itertuples():
     fig.add_vrect(x0=r.from_m, x1=r.to_m, fillcolor="rgba(235,64,52,0.18)", line_width=0, layer="below")
-fig.add_hline(y=W.thr, line=dict(color="rgba(235,64,52,0.9)", width=1, dash="dot"),
+for r in pr[pr["masked"]].itertuples():
+    fig.add_vrect(x0=r.from_m, x1=r.to_m, fillcolor="rgba(120,120,130,0.30)", line_width=0, layer="below")
+fig.add_hline(y=y_line, line=dict(color="rgba(235,64,52,0.9)", width=1, dash="dot"),
               annotation_text="이 아래는 사람 드문 길", annotation_position="bottom left")
 if len(near):
     nm = (W.ab.iloc[near["block"].to_numpy()]["names"].fillna("").str.split(" · ").str[0]
           .str.replace(r"\(.*\)", "", regex=True).str[:20])
-    fig.add_trace(go.Scatter(x=near["at_m"], y=np.full(len(near), 1.05), mode="markers",
+    fig.add_trace(go.Scatter(x=near["at_m"], y=np.full(len(near), y_top), mode="markers",
                              marker=dict(symbol="triangle-down", size=10, color="#50dcff"),
-                             name="문 연 가게", text=nm, hovertemplate="%{text}<extra>출발 후 %{x:,.0f}m</extra>"))
-fig.update_layout(height=260, margin=dict(l=10, r=10, t=10, b=10),
-                  yaxis=dict(range=[0, 1.12], title="사람", showticklabels=False, showgrid=False),
+                             name="문 연 가게" if W.hours_known else "심야 업종 가게", text=nm,
+                             hovertemplate="%{text}<extra>출발 후 %{x:,.0f}m</extra>"))
+yax = (dict(range=[0.5, 3.6], title="", tickvals=[1, 2, 3], ticktext=UI.GRADE_TXT[1:], showgrid=False) if W.priv
+       else dict(range=[0, 1.12], title="사람", showticklabels=False, showgrid=False))
+fig.update_layout(height=260, margin=dict(l=10, r=10, t=10, b=10), yaxis=yax,
                   xaxis=dict(title="출발 후 거리(m)"), legend=dict(orientation="h", y=-0.35), hovermode="x unified")
 st.plotly_chart(fig, width="stretch", key="profile")
 
@@ -172,14 +211,22 @@ with c2:
     f3.update_layout(height=250, margin=dict(l=10, r=10, t=10, b=10), yaxis=dict(autorange="reversed"))
     st.plotly_chart(f3, width="stretch", key="grid")
 
-with st.expander(f"지나가는 길에 문 연 가게 {len(near)}곳"):
-    if len(near):
+with st.expander(f"지나가는 길에 {'문 연 곳' if W.hours_known else '심야 업종 가게 · 지구대'} {len(near) + len(cops)}곳"):
+    if len(near) or len(cops):
         t = W.ab.iloc[near["block"].to_numpy()][["names", f"s{S}"]].copy()
-        t.insert(0, "위치", "출발 후 " + near["at_m"].round(-1).astype(int).map("{:,}m".format).to_numpy())
-        t[f"s{S}"] = (t[f"s{S}"] * 100).round().astype(int).astype(str) + "%"
-        t.columns = ["위치", "가게", "평소 이 시간 영업"]
+        t["at"] = near["at_m"].to_numpy()
+        t[f"s{S}"] = ((t[f"s{S}"] * 100).round().astype(int).astype(str) + "%" if W.hours_known
+                      else "확인 안 됨")
+        t.columns = ["곳", "평소 이 시간 영업", "at"]
+        if len(cops):
+            t = pd.concat([t, pd.DataFrame({"곳": W.police.iloc[cops["block"].to_numpy()]["name"].to_numpy(),
+                                            "평소 이 시간 영업": "24시간", "at": cops["at_m"].to_numpy()})])
+        t = t.sort_values("at")
+        t.insert(0, "위치", "출발 후 " + t.pop("at").round(-1).astype(int).map("{:,}m".format))
         st.dataframe(t, hide_index=True, width="stretch")
-        st.caption("가게는 100m 단위 구역으로 묶여 있어서, 구역 안의 어느 가게가 열었는지까지는 알 수 없어요.")
+        st.caption("가게는 100m 단위 구역으로 묶여 있어서, 구역 안의 어느 가게가 열었는지까지는 알 수 없어요." if W.hours_known
+                   else "카드 결제가 난 구역의 위치를 받지 못해, 가게가 그 시간에 열었는지는 확인하지 못했어요. "
+                        "편의점 · 주유소 · PC방 위치만 보여 드려요.")
 dong = W.nodes["dong"].iat[d["node"]]
 cv = W.curve[(W.curve["dong"] == dong) & (W.curve["dow"] == NC.SLOTS[S][0])].sort_values("hour")
 if len(cv):
@@ -197,5 +244,7 @@ with st.expander("어떻게 계산하나요?"):
 - 같은 요일·시간의 평소 모습이에요. 실시간 정보는 아니에요.
 - 범죄 정보는 반영하지 않아요.
 - 걷는 시간은 초속 {PM.WALK_MPS.value}m로 계산했어요(가정값).
-- 지금은 시연용으로 만든 데이터라 실제 거리와 달라요.
-""")
+- 사람 수와 가게 영업은 시연용으로 만든 데이터라 실제 거리와 달라요.
+""" + ("""- 보안등은 안산시가 공개한 2022년 12월 자료예요. 큰길 가로등은 들어 있지 않아서 큰길은 따로 세지 않아요.
+- 지구대·파출소 위치는 오픈스트리트맵 자료예요. 보안등은 길 안내에 쓰지 않고 보여주기만 해요.
+""" if W.real else ""))

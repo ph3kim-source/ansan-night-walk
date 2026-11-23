@@ -203,6 +203,7 @@
     "앵커|주유소": 82,
     "유흥|무도 유흥 주점": 12
   },
+  "pop_alloc": "uniform",
   "nodes": 34263,
   "edges_n": 39940,
   "components": 1,
@@ -250,5 +251,222 @@
   "worst_before_m": 943.9,
   "worst_after_m": 769.5,
   "extra_pct": 6.4,
-  "alpha_saturated_pct": 84.2
+  "alpha_saturated_pct": 84.2,
+  "resolution": {
+    "sig": "29c72de5bd3f46cb",
+    "pairs": 120,
+    "detours": [
+      0.0,
+      0.1,
+      0.2,
+      0.4
+    ],
+    "anchor_cells": 1749,
+    "anchor_cells_no_home_pct": 35.0,
+    "cells": {
+      "uniform": {
+        "blocks_const": 110,
+        "blocks": 110,
+        "zero_flow_cells_pct": 0.0,
+        "flow_binding_pct": 48.4,
+        "anchor_cells_flow_low_pct": 2.9
+      },
+      "homes": {
+        "blocks_const": 42,
+        "blocks": 110,
+        "zero_flow_cells_pct": 43.3,
+        "flow_binding_pct": 48.8,
+        "anchor_cells_flow_low_pct": 27.6
+      },
+      "homes(count)": {
+        "blocks_const": 42,
+        "blocks": 110,
+        "zero_flow_cells_pct": 43.3,
+        "flow_binding_pct": 48.0,
+        "anchor_cells_flow_low_pct": 27.6
+      },
+      "homes(shuffled)": {
+        "blocks_const": 42,
+        "blocks": 110,
+        "zero_flow_cells_pct": 43.3,
+        "flow_binding_pct": 46.9,
+        "anchor_cells_flow_low_pct": 50.2
+      },
+      "homes_or_shops": {
+        "blocks_const": 4,
+        "blocks": 110,
+        "zero_flow_cells_pct": 0.0,
+        "flow_binding_pct": 49.3,
+        "anchor_cells_flow_low_pct": 1.1
+      }
+    },
+    "runs": {
+      "homes·min": {
+        "thr": 0.2165,
+        "dark_len_pct": 10.1,
+        "tie_at_thr_pct": 32.2
+      },
+      "uniform·min": {
+        "thr": 0.3218,
+        "dark_len_pct": 23.8,
+        "tie_at_thr_pct": 1.5,
+        "curve_dark_m": [
+          585,
+          489,
+          470,
+          434
+        ],
+        "detour_resp_pct": 25.8,
+        "pairs_with_dark": 63,
+        "dark_before_m": 1115.0,
+        "dark_after_m": 895.1,
+        "dark_cut_pct": 19.7,
+        "worst_before_m": 943.9,
+        "worst_after_m": 769.5,
+        "extra_pct": 6.4,
+        "alpha_saturated_pct": 84.2,
+        "jaccard_vs_uniform": 1.0,
+        "changed_vs_uniform_pct": 0.0
+      },
+      "homes_or_shops·min": {
+        "thr": 0.2539,
+        "dark_len_pct": 25.0,
+        "tie_at_thr_pct": 0.0,
+        "curve_dark_m": [
+          867,
+          639,
+          559,
+          501
+        ],
+        "detour_resp_pct": 42.2,
+        "pairs_with_dark": 114,
+        "dark_before_m": 912.6,
+        "dark_after_m": 588.9,
+        "dark_cut_pct": 35.5,
+        "worst_before_m": 595.9,
+        "worst_after_m": 429.6,
+        "extra_pct": 9.5,
+        "alpha_saturated_pct": 60.8,
+        "jaccard_vs_uniform": 0.484,
+        "changed_vs_uniform_pct": 92.5
+      },
+      "uniform·lex": {
+        "thr": 0.4543,
+        "dark_len_pct": 25.0,
+        "tie_at_thr_pct": 0.0,
+        "curve_dark_m": [
+          609,
+          503,
+          472,
+          436
+        ],
+        "detour_resp_pct": 28.4,
+        "pairs_with_dark": 64,
+        "dark_before_m": 1141.7,
+        "dark_after_m": 885.2,
+        "dark_cut_pct": 22.5,
+        "worst_before_m": 955.0,
+        "worst_after_m": 765.7,
+        "extra_pct": 8.6,
+        "alpha_saturated_pct": 69.2,
+        "jaccard_vs_uniform": 1.0,
+        "changed_vs_uniform_pct": 0.0
+      },
+      "homes·lex": {
+        "thr": 0.4356,
+        "dark_len_pct": 25.0,
+        "tie_at_thr_pct": 0.0,
+        "curve_dark_m": [
+          885,
+          642,
+          584,
+          527
+        ],
+        "detour_resp_pct": 40.4,
+        "pairs_with_dark": 112,
+        "dark_before_m": 948.0,
+        "dark_after_m": 625.9,
+        "dark_cut_pct": 34.0,
+        "worst_before_m": 657.8,
+        "worst_after_m": 474.3,
+        "extra_pct": 10.4,
+        "alpha_saturated_pct": 45.0,
+        "jaccard_vs_uniform": 0.406,
+        "changed_vs_uniform_pct": 94.2
+      },
+      "homes_or_shops·lex": {
+        "thr": 0.4473,
+        "dark_len_pct": 25.0,
+        "tie_at_thr_pct": 0.0,
+        "curve_dark_m": [
+          917,
+          663,
+          585,
+          515
+        ],
+        "detour_resp_pct": 43.8,
+        "pairs_with_dark": 114,
+        "dark_before_m": 965.4,
+        "dark_after_m": 616.3,
+        "dark_cut_pct": 36.2,
+        "worst_before_m": 617.5,
+        "worst_after_m": 432.1,
+        "extra_pct": 9.8,
+        "alpha_saturated_pct": 47.5,
+        "jaccard_vs_uniform": 0.46,
+        "changed_vs_uniform_pct": 92.5
+      },
+      "homes(count)·lex": {
+        "thr": 0.4356,
+        "dark_len_pct": 25.0,
+        "tie_at_thr_pct": 0.0,
+        "curve_dark_m": [
+          885,
+          644,
+          587,
+          525
+        ],
+        "detour_resp_pct": 40.7,
+        "pairs_with_dark": 112,
+        "dark_before_m": 948.0,
+        "dark_after_m": 628.7,
+        "dark_cut_pct": 33.7,
+        "worst_before_m": 657.8,
+        "worst_after_m": 476.7,
+        "extra_pct": 10.9,
+        "alpha_saturated_pct": 43.3,
+        "jaccard_vs_uniform": 0.41,
+        "changed_vs_uniform_pct": 94.2
+      },
+      "homes(shuffled)·lex": {
+        "thr": 0.4426,
+        "dark_len_pct": 25.0,
+        "tie_at_thr_pct": 0.0,
+        "curve_dark_m": [
+          842,
+          592,
+          531,
+          466
+        ],
+        "detour_resp_pct": 44.7,
+        "pairs_with_dark": 115,
+        "dark_before_m": 879.0,
+        "dark_after_m": 553.9,
+        "dark_cut_pct": 37.0,
+        "worst_before_m": 543.4,
+        "worst_after_m": 355.3,
+        "extra_pct": 9.9,
+        "alpha_saturated_pct": 48.3,
+        "jaccard_vs_uniform": 0.405,
+        "changed_vs_uniform_pct": 95.8
+      }
+    },
+    "self_check": {
+      "curve": true,
+      "dark_cut_pct": true,
+      "alpha_saturated_pct": true,
+      "extra_pct": true
+    },
+    "sec": 2415
+  }
 }

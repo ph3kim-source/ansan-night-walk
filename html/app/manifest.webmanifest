@@ -1,0 +1,17 @@
+{
+  "name": "안산 밤길",
+  "short_name": "안산 밤길",
+  "description": "밤에 걷고 달리는 길을 함께 골라 드려요 — 시연판 · 사람 수는 가상 데이터 · 안산시 공식 서비스 아님",
+  "lang": "ko",
+  "start_url": "./?source=app",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b1838",
+  "theme_color": "#16325c",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

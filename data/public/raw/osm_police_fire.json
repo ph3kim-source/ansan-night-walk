@@ -1,0 +1,743 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-11-18T01:11:32Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+
+{
+  "type": "node",
+  "id": 368606165,
+  "lat": 37.3511683,
+  "lon": 126.7287238,
+  "tags": {
+    "amenity": "police",
+    "name": "시흥경찰서 옥구지구대",
+    "name:en": "Siheung Police Station",
+    "name:ko": "시흥경찰서 옥구지구대",
+    "name:ko-Latn": "Siheunggyeongchalseo"
+  }
+},
+{
+  "type": "node",
+  "id": 1930074975,
+  "lat": 37.3213450,
+  "lon": 126.8326008,
+  "tags": {
+    "amenity": "police",
+    "name": "고잔2치안센터"
+  }
+},
+{
+  "type": "node",
+  "id": 4633931024,
+  "lat": 37.3056081,
+  "lon": 126.9023876,
+  "tags": {
+    "amenity": "police",
+    "name": "안산상록경찰서 반월파출소",
+    "name:ko": "안산상록경찰서 반월파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 4633931025,
+  "lat": 37.3059050,
+  "lon": 126.9025844,
+  "tags": {
+    "amenity": "fire_station",
+    "name": "반월119 지역대"
+  }
+},
+{
+  "type": "node",
+  "id": 4636798530,
+  "lat": 37.3401724,
+  "lon": 126.7436733,
+  "tags": {
+    "amenity": "police",
+    "name": "시흥경찰서 시화파출소",
+    "name:ko": "시흥경찰서 시화파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 7777403975,
+  "lat": 37.2975153,
+  "lon": 126.8875069,
+  "tags": {
+    "amenity": "police",
+    "name": "안산상록경찰서 팔곡파출소",
+    "name:ko": "안산상록경찰서 팔곡파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 7777403976,
+  "lat": 37.3126894,
+  "lon": 126.8643807,
+  "tags": {
+    "amenity": "police",
+    "name": "안산상록경찰서 일동파출소",
+    "name:ko": "안산상록경찰서 일동파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 7777403977,
+  "lat": 37.3072803,
+  "lon": 126.8514834,
+  "tags": {
+    "amenity": "police",
+    "name": "안산상록경찰서 이동파출소",
+    "name:ko": "안산상록경찰서 이동파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 7777403978,
+  "lat": 37.3331534,
+  "lon": 126.8463384,
+  "tags": {
+    "amenity": "police",
+    "name": "안산상록경찰서 월피파출소",
+    "name:ko": "안산상록경찰서 월피파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 7777403979,
+  "lat": 37.3639869,
+  "lon": 126.8763933,
+  "tags": {
+    "amenity": "police",
+    "name": "안산상록경찰서 수암파출소",
+    "name:ko": "안산상록경찰서 수암파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 7777403980,
+  "lat": 37.3270439,
+  "lon": 126.8473130,
+  "tags": {
+    "amenity": "police",
+    "name": "안산상록경찰서 성포파출소",
+    "name:ko": "안산상록경찰서 성포파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 7777403981,
+  "lat": 37.3316479,
+  "lon": 126.8608193,
+  "tags": {
+    "amenity": "police",
+    "name": "안산상록경찰서 부곡파출소",
+    "name:ko": "안산상록경찰서 부곡파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 7777403982,
+  "lat": 37.2848792,
+  "lon": 126.8635110,
+  "tags": {
+    "amenity": "police",
+    "name": "안산상록경찰서 본오1파출소",
+    "name:ko": "안산상록경찰서 본오1파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 7777411623,
+  "lat": 37.3278445,
+  "lon": 126.9175032,
+  "tags": {
+    "amenity": "police",
+    "name": "군포경찰서 대야파출소",
+    "name:ko": "군포경찰서 대야파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 7777414892,
+  "lat": 37.3129349,
+  "lon": 126.7934000,
+  "tags": {
+    "amenity": "police",
+    "name": "안산단원경찰서 공단파출소",
+    "name:ko": "안산단원경찰서 공단파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 7777414896,
+  "lat": 37.3326486,
+  "lon": 126.7946097,
+  "tags": {
+    "amenity": "police",
+    "name": "안산단원경찰서 원곡다문화파출소",
+    "name:ko": "안산단원경찰서 원곡다문화파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 7777414898,
+  "lat": 37.3673050,
+  "lon": 126.7293136,
+  "tags": {
+    "amenity": "police",
+    "name": "시흥경찰서 배곧파출소",
+    "name:ko": "시흥경찰서 배곧파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 7777414901,
+  "lat": 37.3690446,
+  "lon": 126.8138833,
+  "tags": {
+    "amenity": "police",
+    "name": "시흥경찰서 능곡파출소",
+    "name:ko": "시흥경찰서 능곡파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 7777414902,
+  "lat": 37.3443348,
+  "lon": 126.7853634,
+  "tags": {
+    "amenity": "police",
+    "name": "시흥경찰서 군자파출소",
+    "name:ko": "시흥경찰서 군자파출소"
+  }
+},
+{
+  "type": "node",
+  "id": 11879859036,
+  "lat": 37.3433624,
+  "lon": 126.8289614,
+  "tags": {
+    "amenity": "police",
+    "name": "와동 파출소",
+    "phone": "+82 31 410 0112"
+  }
+},
+{
+  "type": "way",
+  "id": 300166367,
+  "center": {
+    "lat": 37.3525602,
+    "lon": 126.9270873
+  },
+  "tags": {
+    "addr:city": "군포시",
+    "addr:housenumber": "429",
+    "addr:postcode": "15870",
+    "addr:province": "경기도",
+    "addr:street": "고산로",
+    "amenity": "fire_station",
+    "building": "yes",
+    "name": "군포소방서",
+    "name:en": "Gunpo Fire Station",
+    "name:ko": "군포소방서",
+    "wikidata": "Q12586010"
+  }
+},
+{
+  "type": "way",
+  "id": 468395764,
+  "center": {
+    "lat": 37.2968678,
+    "lon": 126.8512466
+  },
+  "tags": {
+    "addr:city": "안산시",
+    "addr:district": "상록구",
+    "addr:housenumber": "175",
+    "addr:postcode": "15582",
+    "addr:province": "경기도",
+    "addr:street": "석호로",
+    "amenity": "police",
+    "building": "public",
+    "name": "안산상록경찰서 사동지구대",
+    "name:ko": "안산상록경찰서 사동지구대",
+    "source": "도로명주소"
+  }
+},
+{
+  "type": "way",
+  "id": 469020652,
+  "center": {
+    "lat": 37.3030705,
+    "lon": 126.9060207
+  },
+  "tags": {
+    "amenity": "fire_station",
+    "building": "yes",
+    "name": "반월119안전센터"
+  }
+},
+{
+  "type": "way",
+  "id": 500563354,
+  "center": {
+    "lat": 37.3212800,
+    "lon": 126.8331887
+  },
+  "tags": {
+    "amenity": "fire_station",
+    "building": "yes",
+    "name": "고잔119안전센터"
+  }
+},
+{
+  "type": "way",
+  "id": 500563356,
+  "center": {
+    "lat": 37.3217659,
+    "lon": 126.8292412
+  },
+  "tags": {
+    "amenity": "police",
+    "building": "public",
+    "name": "경기 안산단원경찰서",
+    "name:ko": "경기 안산단원경찰서"
+  }
+},
+{
+  "type": "way",
+  "id": 504017598,
+  "center": {
+    "lat": 37.3320377,
+    "lon": 126.8091918
+  },
+  "tags": {
+    "amenity": "police",
+    "building": "public",
+    "name": "안산단원경찰서 선부파출소",
+    "name:ko": "안산단원경찰서 선부파출소"
+  }
+},
+{
+  "type": "way",
+  "id": 507351053,
+  "center": {
+    "lat": 37.3714988,
+    "lon": 126.9390379
+  },
+  "tags": {
+    "addr:city": "군포시",
+    "addr:housenumber": "69",
+    "addr:postcode": "15806",
+    "addr:province": "경기도",
+    "addr:street": "군포로761번길",
+    "amenity": "police",
+    "building": "yes",
+    "name": "산본치안센터",
+    "source": "도로명주소"
+  }
+},
+{
+  "type": "way",
+  "id": 508414923,
+  "center": {
+    "lat": 37.3026533,
+    "lon": 126.8612403
+  },
+  "tags": {
+    "addr:city": "안산시",
+    "addr:district": "상록구",
+    "addr:housenumber": "12",
+    "addr:postcode": "15532",
+    "addr:province": "경기도",
+    "addr:street": "상록수로",
+    "amenity": "police",
+    "building": "public",
+    "name": "안산상록경찰서 본오지구대",
+    "name:ko": "안산상록경찰서 본오지구대",
+    "source": "도로명주소"
+  }
+},
+{
+  "type": "way",
+  "id": 545127892,
+  "center": {
+    "lat": 37.3719699,
+    "lon": 126.9326194
+  },
+  "tags": {
+    "amenity": "police",
+    "building": "yes",
+    "name": "방범기동순찰산본지대"
+  }
+},
+{
+  "type": "way",
+  "id": 545237126,
+  "center": {
+    "lat": 37.3682630,
+    "lon": 126.9272605
+  },
+  "tags": {
+    "amenity": "fire_station",
+    "building": "yes",
+    "name": "산본119안전센터"
+  }
+},
+{
+  "type": "way",
+  "id": 545484500,
+  "center": {
+    "lat": 37.3495497,
+    "lon": 126.7395340
+  },
+  "tags": {
+    "amenity": "fire_station",
+    "building": "yes",
+    "name": "시흥소방서",
+    "name:en": "Sihueng Fire Station",
+    "name:ko": "시흥소방서",
+    "wikidata": "Q16098104"
+  }
+},
+{
+  "type": "way",
+  "id": 545484505,
+  "center": {
+    "lat": 37.3487713,
+    "lon": 126.7410006
+  },
+  "tags": {
+    "amenity": "police",
+    "building": "yes",
+    "name": "시흥경찰서 정왕지구대",
+    "name:ko": "시흥경찰서 정왕지구대"
+  }
+},
+{
+  "type": "way",
+  "id": 547240208,
+  "center": {
+    "lat": 37.3607936,
+    "lon": 126.9365404
+  },
+  "tags": {
+    "addr:housenumber": "16",
+    "addr:street": "산본로324번길",
+    "amenity": "police",
+    "building": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 548470941,
+  "center": {
+    "lat": 37.3605147,
+    "lon": 126.9359811
+  },
+  "tags": {
+    "addr:housenumber": "16",
+    "addr:street": "산본로324번길",
+    "amenity": "police",
+    "building": "public",
+    "name": "경기 군포경찰서",
+    "name:en": "Gunpo Police Station",
+    "name:ja": "京畿 軍浦警察署",
+    "name:ko": "경기 군포경찰서",
+    "wikidata": "Q11637429"
+  }
+},
+{
+  "type": "way",
+  "id": 548470953,
+  "center": {
+    "lat": 37.3679011,
+    "lon": 126.9265554
+  },
+  "tags": {
+    "amenity": "police",
+    "building": "public",
+    "name": "군포경찰서 산본지구대",
+    "name:ko": "군포경찰서 산본지구대"
+  }
+},
+{
+  "type": "way",
+  "id": 561325616,
+  "center": {
+    "lat": 37.3605398,
+    "lon": 126.9370244
+  },
+  "tags": {
+    "addr:housenumber": "16",
+    "addr:street": "산본로324번길",
+    "amenity": "police",
+    "building": "yes"
+  }
+},
+{
+  "type": "way",
+  "id": 585784743,
+  "center": {
+    "lat": 37.3561215,
+    "lon": 126.9212189
+  },
+  "tags": {
+    "amenity": "police",
+    "building": "yes",
+    "name": "수리치안센터",
+    "name:en": "Suri Community Policing Center"
+  }
+},
+{
+  "type": "way",
+  "id": 628379850,
+  "center": {
+    "lat": 37.3583192,
+    "lon": 126.9391619
+  },
+  "tags": {
+    "addr:city": "군포시",
+    "addr:housenumber": "119",
+    "addr:postcode": "15835",
+    "addr:province": "경기도",
+    "addr:street": "오금로",
+    "amenity": "police",
+    "building": "yes",
+    "source": "도로명주소"
+  }
+},
+{
+  "type": "way",
+  "id": 740551570,
+  "center": {
+    "lat": 37.3448358,
+    "lon": 126.8126651
+  },
+  "tags": {
+    "addr:city": "안산시",
+    "addr:district": "단원구",
+    "addr:housenumber": "14-20",
+    "addr:postcode": "15212",
+    "addr:province": "경기도",
+    "addr:street": "선삼로2길",
+    "amenity": "police",
+    "building": "public",
+    "name": "안산단원경찰서 선부3파출소",
+    "name:ko": "안산단원경찰서 선부3파출소",
+    "source": "도로명주소"
+  }
+},
+{
+  "type": "way",
+  "id": 744554166,
+  "center": {
+    "lat": 37.3339521,
+    "lon": 126.8044137
+  },
+  "tags": {
+    "addr:city": "안산시",
+    "addr:district": "단원구",
+    "addr:housenumber": "43",
+    "addr:postcode": "15365",
+    "addr:province": "경기도",
+    "addr:street": "선부광장서로",
+    "amenity": "fire_station",
+    "building": "civic",
+    "name": "선부119안전센터"
+  }
+},
+{
+  "type": "way",
+  "id": 761911119,
+  "center": {
+    "lat": 37.2997899,
+    "lon": 126.8443539
+  },
+  "tags": {
+    "amenity": "police",
+    "building": "yes",
+    "name": "통합민원실",
+    "name:ko": "통합민원실"
+  }
+},
+{
+  "type": "way",
+  "id": 761911120,
+  "center": {
+    "lat": 37.2991756,
+    "lon": 126.8450730
+  },
+  "tags": {
+    "amenity": "police",
+    "building": "public",
+    "name": "안산상록경찰서",
+    "name:en": "Ansan Sangnok Police Station",
+    "name:ko": "안산상록경찰서",
+    "phone": "+82-31-415-9112",
+    "wikidata": "Q12605681",
+    "wikipedia": "ko:안산상록경찰서"
+  }
+},
+{
+  "type": "way",
+  "id": 766597693,
+  "center": {
+    "lat": 37.3763554,
+    "lon": 126.7879982
+  },
+  "tags": {
+    "addr:city": "시흥시",
+    "addr:housenumber": "513",
+    "addr:postcode": "15002",
+    "addr:province": "경기도",
+    "addr:street": "황고개로",
+    "amenity": "police",
+    "name": "시흥경찰서",
+    "name:en": "Siheung Police Station",
+    "name:ko": "시흥경찰서",
+    "operator": "경기남부경찰청"
+  }
+},
+{
+  "type": "way",
+  "id": 833123569,
+  "center": {
+    "lat": 37.3102930,
+    "lon": 126.8247923
+  },
+  "tags": {
+    "addr:city": "안산시",
+    "addr:housenumber": "127",
+    "addr:postcode": "15473",
+    "addr:street": "광덕2로",
+    "amenity": "police",
+    "building": "public",
+    "name": "호수지구대",
+    "name:ko": "호수지구대"
+  }
+},
+{
+  "type": "way",
+  "id": 833123570,
+  "center": {
+    "lat": 37.3280743,
+    "lon": 126.7972570
+  },
+  "tags": {
+    "addr:city": "안산시",
+    "addr:district": "단원구",
+    "addr:housenumber": "33",
+    "addr:postcode": "15380",
+    "addr:province": "경기도",
+    "addr:street": "원선로",
+    "amenity": "police",
+    "building": "public",
+    "name": "안산단원경찰서 원선파출소",
+    "name:ko": "안산단원경찰서 원선파출소",
+    "source": "도로명주소"
+  }
+},
+{
+  "type": "way",
+  "id": 928864294,
+  "center": {
+    "lat": 37.3440604,
+    "lon": 126.8038869
+  },
+  "tags": {
+    "addr:city": "안산시",
+    "addr:district": "단원구",
+    "addr:housenumber": "19",
+    "addr:postcode": "15220",
+    "addr:province": "경기도",
+    "addr:street": "선여불로",
+    "amenity": "police",
+    "building": "public",
+    "name": "안산단원경찰서 선부2파출소",
+    "name:ko": "안산단원경찰서 선부2파출소",
+    "source": "도로명주소"
+  }
+},
+{
+  "type": "way",
+  "id": 1008705844,
+  "center": {
+    "lat": 37.3350396,
+    "lon": 126.7835833
+  },
+  "tags": {
+    "addr:city": "안산시",
+    "addr:district": "단원구",
+    "addr:housenumber": "50",
+    "addr:postcode": "15403",
+    "addr:province": "경기도",
+    "addr:street": "삼일로",
+    "amenity": "fire_station",
+    "building": "public",
+    "name": "신길 119 안전센터",
+    "name:ko": "신길 119 안전센터",
+    "source": "도로명주소"
+  }
+},
+{
+  "type": "way",
+  "id": 1008705845,
+  "center": {
+    "lat": 37.3345831,
+    "lon": 126.7838752
+  },
+  "tags": {
+    "addr:city": "안산시",
+    "addr:district": "단원구",
+    "addr:housenumber": "45",
+    "addr:postcode": "15403",
+    "addr:province": "경기도",
+    "addr:street": "도일로",
+    "amenity": "police",
+    "building": "public",
+    "name": "안산단원경찰서 신길파출소",
+    "name:ko": "안산단원경찰서 신길파출소",
+    "source": "도로명주소"
+  }
+},
+{
+  "type": "way",
+  "id": 1033132514,
+  "center": {
+    "lat": 37.3382800,
+    "lon": 126.7287141
+  },
+  "tags": {
+    "addr:city": "시흥시",
+    "addr:housenumber": "230",
+    "addr:postcode": "15079",
+    "addr:province": "경기도",
+    "addr:street": "공단1대로",
+    "addr:subdistrict": "정왕동",
+    "amenity": "fire_station",
+    "building": "yes",
+    "name": "시흥119화학구조센터"
+  }
+},
+{
+  "type": "way",
+  "id": 1376905076,
+  "center": {
+    "lat": 37.3483738,
+    "lon": 126.8158330
+  },
+  "tags": {
+    "amenity": "police",
+    "building": "yes",
+    "name": "선부3파출소"
+  }
+}
+
+  ]
+}
